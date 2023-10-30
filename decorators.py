@@ -1,10 +1,10 @@
+import asyncio
 import functools
 from typing import Callable
 
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import settings
 from dbengine import create_session
 
 
@@ -12,6 +12,7 @@ def httpx_client(func: Callable):
     """
     httpx客户端装饰器，需配合关键字参数client使用
     """
+
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         if "client" not in kwargs or not isinstance(kwargs["client"], httpx.AsyncClient):
@@ -22,6 +23,28 @@ def httpx_client(func: Callable):
             return await func(*args, **kwargs)
 
     return wrapper
+
+
+def retry(max_retries=3, delay=1):
+    """
+    重试装饰器
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            for i in range(max_retries):
+                try:
+                    return await func(*args, **kwargs)
+                except Exception as e:
+                    if i == max_retries - 1:
+                        raise e
+                    else:
+                        await asyncio.sleep(delay)
+
+        return wrapper
+
+    return decorator
 
 
 def transactional(func):

@@ -1,59 +1,76 @@
-import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
+from json import JSONDecodeError
 
-from httpx import AsyncClient
+from sim_request import SimClient
+from user import login
 
-from dbengine import create_session
-from decorators import httpx_client, transactional
-from log_utils import logger
-
-
-def market_url() -> str:
-    utc_now = datetime.now(timezone.utc) - timedelta(days=1)
-    formatted_datetime = utc_now.strftime("%Y-%m-%dT%H:%M:%S.%fZ")[:-4] + "Z"
-    url = f"https://www.simcompanies.com/api/v2/market-ticker/0/{formatted_datetime}/"
-    return url
+building_chart = {
+    "2": "车行",
+    "L": "电子产品厂",
+}
 
 
-@httpx_client
-async def get_encyclopedia_resources(item_id: int | str, *, client: AsyncClient = None) -> dict:
-    encyclopedia_url = f"https://www.simcompanies.com/api/v4/zh/0/encyclopedia/resources/1/{item_id}/"
-    response = await client.get(encyclopedia_url)
-    item_info = response.json()
-    # logger.debug(item_info)
-    return item_info
+def date_to_timestamp(date: str) -> int:
+    date_object = datetime.fromisoformat(date)
+    return int(date_object.timestamp())
 
 
-@httpx_client
-async def main(client: AsyncClient = None):
-    response = await client.get(market_url())
-    market_list = response.json()
-    logger.debug(f"获取到{len(market_list)}条百科数据")
-    encyclopedia_future_list = []
-    for market_info in market_list:
-        encyclopedia_future_list.append(get_encyclopedia_resources(market_info["kind"], client=client))
-        # break  # todo
-    item_list = await asyncio.gather(*encyclopedia_future_list)
-    # logger.debug(item_list)
-    for item in item_list:
-        async with create_session() as session:
-            pass
-        sold_at = item["soldAt"]  # 售卖
-        sold_at_restaurant = item["soldAtRestaurant"]  # 餐厅售卖
-        transportaion = item["transportation"]  # 运输单位(交易所)
-        produced_an_hour = item["producedAnHour"]  # 每小时产量
-        market_saturation = item["marketSaturation"]  # 市场饱和度
-        market_saturation_label = item["marketSaturationLabel"]  # 市场饱和度标签
-        needed_for_list = item["neededFor"]  # 用于
-        # logger.debug(f"needed_for_list: {needed_for_list}")
-        # todo
-        produced_from = item["producedFrom"]  # 产自
-        # logger.debug(f"produced_from: {produced_from}")
-        # todo
+async def get_building_info():
+    client = SimClient()
+    client = await login(client)
+    building_api = "https://www.simcompanies.com/api/v2/companies/me/buildings/"
+    response = await client.get(building_api)
+    try:
+        building_info_list = response.json()
+    except JSONDecodeError:
+        print(response.text)
+        return
+    buildings = []
 
-
+    for building_info in building_info_list:
+        building_dict = {
+            "name": building_info["name"],
+            "size": building_info["size"],
+            "kind": building_chart[building_info["kind"]],
+            "category": building_info["category"]
+        }
+        business_info = building_info.get("busy")
+        if business_info:
+            building_dict["can_fetch"] = business_info.get("canFetch", False)
+            business_start = date_to_timestamp(business_info["started"])
+            building_dict["business_duration"] = business_info["duration"]
+            building_dict["business_start"] = datetime.fromtimestamp(business_start).strftime("%Y-%m-%d %H:%M:%S")
+            building_dict["business_end"] = datetime.fromtimestamp(
+                business_start + business_info["duration"]
+            ).strftime("%Y-%m-%d %H:%M:%S")
+            building_dict["business_time_left"] = (
+                business_start + business_info["duration"] - int(datetime.now().timestamp())
+            )
+            building_dict["expanding"] = business_info.get("expanding", False)
+            if building_dict["expanding"]:
+                building_dict["status"] = "expanding"
+            if business_info.get("sales_order"):
+                building_dict["status"] = "selling"
+                selling_info = business_info["sales_order"]
+                building_dict["selling_amount"] = selling_info["amount"]
+                building_dict["selling_price"] = selling_info["price"]
+                building_dict["selling_item_id"] = selling_info["kind"]
+                building_dict["selling_item_name"] = selling_info["name"]
+                building_dict["selling_remaining_profit"] = selling_info["remainingProfit"]
+            if business_info.get("resource"):
+                building_dict["status"] = "producing"
+                resource_info = business_info["resource"]
+                building_dict["resource_amount"] = resource_info["amount"]
+                building_dict["resource_item_id"] = resource_info["kind"]
+                building_dict["resource_item_name"] = resource_info["name"]
+                building_dict["resource_quality"] = resource_info["quality"]
+                building_dict["resource_unit_cost"] = round(resource_info["unitCost"], 2)
+        buildings.append(building_dict)
+    import json
+    return json.dumps(buildings, indent=4, ensure_ascii=False)
 
 
 if __name__ == "__main__":
-    # asyncio.run(get_encyclopedia_resources(125))
-    asyncio.run(main())
+    import asyncio
+
+    print(asyncio.run(get_building_info()))
