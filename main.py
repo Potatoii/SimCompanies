@@ -65,10 +65,14 @@ async def get_building_info():
                 building_dict["resource_item_name"] = resource_info["name"]
                 building_dict["resource_quality"] = resource_info["quality"]
                 building_dict["resource_unit_cost"] = round(resource_info["unitCost"], 2)
+        else:
+            building_dict["status"] = "idle"
         buildings.append(building_dict)
     import json
     return json.dumps(buildings, indent=4, ensure_ascii=False)
 
+
+# 进货: https://www.simcompanies.com/api/v2/market-order/take/
 
 if __name__ == "__main__":
     import asyncio
