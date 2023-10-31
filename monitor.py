@@ -21,6 +21,8 @@ async def building_monitor():
                         idle_building_list.append(building_info["id"])
                         await auto_order(simclient=simclient)
                         await auto_production_on_board_computer(20, simclient=simclient)
+                        await bark_notification(f"{building_info['name']}已开始生产")
+                        idle_building_list.remove(building_info["id"])
                 else:
                     if building_info["id"] in idle_building_list:
                         await bark_notification(f"{building_info['name']}已开始生产")

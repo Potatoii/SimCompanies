@@ -1,5 +1,6 @@
 import asyncio
 
+from bark import bark_notification
 from decorators import sim_client
 from log_utils import logger
 from main import get_building_info, get_resources
@@ -13,11 +14,6 @@ async def auto_production_on_board_computer(quantity: int, *, simclient: SimClie
     """
     factory_id = 28062782
     product_api = f"https://www.simcompanies.com/api/v1/buildings/{factory_id}/busy/"
-    body = {
-        "kind": 47,  # 产品id
-        "amount": quantity,
-        "limitQuality": None
-    }
     buildings = await get_building_info(simclient=simclient)
     for building_info in buildings:
         if building_info["id"] == factory_id:
@@ -50,7 +46,11 @@ async def auto_production_on_board_computer(quantity: int, *, simclient: SimClie
                 else:
                     logger.info("库存中有足够的电子元件")
                 response = await simclient.post(product_api, {"kind": 47, "amount": quantity})
-                logger.info(response.json()["message"])
+                if response.status_code == 200:
+                    logger.info(response.json()["message"])
+                else:
+                    logger.error(response.json()["message"])
+                    await bark_notification(response.json()["message"])
 
 
 @sim_client
@@ -60,7 +60,12 @@ async def auto_purchase(item: dict, *, simclient: SimClient = None):
     """
     purchase_url = "https://www.simcompanies.com/api/v2/market-order/take/"
     response = await simclient.post(purchase_url, item)
-    logger.info(response.json())
+    if response.status_code == 200:
+        logger.info(response.json()["message"])
+    else:
+        logger.error(response.json()["message"])
+        await bark_notification(response.json()["message"])
+    return response
 
 
 @sim_client
