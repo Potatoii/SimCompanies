@@ -2,9 +2,12 @@ import json
 import time
 from hashlib import md5
 
+import httpx
 from httpx import AsyncClient, Cookies
 
-from decorators import httpx_client, retry
+import settings
+from decorators import retry
+from log_utils import logger
 
 
 class SimClient:
@@ -12,14 +15,26 @@ class SimClient:
         self.homepage_url = "https://www.simcompanies.com/zh/"
         self.headers = {}
         self.cookies: Cookies = Cookies()
+        self.client: AsyncClient = httpx.AsyncClient()
 
-    @httpx_client
-    async def generate_cookies(self, *, client: AsyncClient = None):
-        response = await client.get(self.homepage_url)
+    async def __aenter__(self):
+        self.client = httpx.AsyncClient()
+        await self.login()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.client.aclose()
+        self.client = None
+
+    async def close(self):
+        await self.client.aclose()
+
+    async def generate_cookies(self):
+        response = await self.client.get(self.homepage_url)
         cookies = response.cookies
         self.cookies = cookies
 
-    async def generate_headers(self, url: str):
+    def generate_headers(self, url: str):
         timestamp = int(time.time() * 1000)
         headers = {
             "Accept": "application/json, text/plain, */*", "Content-Type": "application/json;charset=UTF-8",
@@ -38,23 +53,37 @@ class SimClient:
         }
         self.headers = headers
 
-    @httpx_client
     @retry()
-    async def get(self, url: str, *, client: AsyncClient = None):
-        await self.generate_headers(url)
+    async def get(self, url: str):
+        self.generate_headers(url)
         if not self.cookies:
-            await self.generate_cookies(client=client)
+            await self.generate_cookies()
             self.headers["X-Csrftoken"] = self.cookies.get("csrftoken")
-        response = await client.get(url, headers=self.headers, cookies=self.cookies)
+        response = await self.client.get(url, headers=self.headers, cookies=self.cookies)
         return response
 
-    @httpx_client
     @retry()
-    async def post(self, url: str, body: dict, *, client: AsyncClient = None):
-        await self.generate_headers(url)
+    async def post(self, url: str, body: dict):
+        self.generate_headers(url)
         if not self.cookies:
-            await self.generate_cookies(client=client)
-            self.headers["X-Csrftoken"] = self.cookies.get("csrftoken")
+            await self.generate_cookies()
+        self.headers["X-Csrftoken"] = self.cookies.get("csrftoken")
         self.headers["Content-Length"] = str(len(json.dumps(body)))
-        response = await client.post(url, json=body, headers=self.headers, cookies=self.cookies)
+        response = await self.client.post(url, json=body, headers=self.headers, cookies=self.cookies)
         return response
+
+    async def login(self):
+        auth_api = "https://www.simcompanies.com/api/v2/auth/email/auth/"
+        auth_response = await self.post(
+            auth_api,
+            {
+                "email": settings.user_config["email"],
+                "password": settings.user_config["password"],
+                "timezone_offset": -480,
+            }
+        )
+        if auth_response.status_code != 200:
+            logger.error(auth_response.text)
+            raise Exception("login failed")
+        logger.info("login success")
+        self.client.cookies = auth_response.cookies

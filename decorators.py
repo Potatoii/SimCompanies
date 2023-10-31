@@ -25,6 +25,24 @@ def httpx_client(func: Callable):
     return wrapper
 
 
+def sim_client(func: Callable):
+    """
+    sim_client装饰器，需配合关键字参数simclient使用
+    """
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        from sim_request import SimClient
+        if "simclient" not in kwargs or not isinstance(kwargs["simclient"], SimClient):
+            async with SimClient() as simclient:
+                kwargs["simclient"] = simclient
+                return await func(*args, **kwargs)
+        else:
+            return await func(*args, **kwargs)
+
+    return wrapper
+
+
 def retry(max_retries=3, delay=1):
     """
     重试装饰器
