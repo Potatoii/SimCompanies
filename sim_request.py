@@ -15,7 +15,7 @@ class SimClient:
         self.homepage_url = "https://www.simcompanies.com/zh/"
         self.headers = {}
         self.cookies: Cookies = Cookies()
-        self.client: AsyncClient = httpx.AsyncClient()
+        self.client: AsyncClient = httpx.AsyncClient(timeout=60)
 
     async def __aenter__(self):
         self.client = httpx.AsyncClient()
