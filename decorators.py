@@ -2,10 +2,7 @@ import asyncio
 import functools
 from typing import Callable
 
-import httpx
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from dbengine import create_session
+from sqlalchemy.orm import sessionmaker, Session
 
 
 def httpx_client(func: Callable):
@@ -15,6 +12,7 @@ def httpx_client(func: Callable):
 
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
+        import httpx
         if "client" not in kwargs or not isinstance(kwargs["client"], httpx.AsyncClient):
             async with httpx.AsyncClient() as client:
                 kwargs["client"] = client
@@ -65,18 +63,31 @@ def retry(max_retries=3, delay=1):
     return decorator
 
 
-def transactional(func):
+def db_client(func: Callable):
     """
-    统一事务装饰器，需配合关键字参数session使用
+    database装饰器，需配合关键字参数db_session使用
     """
 
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        if "session" not in kwargs and isinstance(kwargs["session"], AsyncSession):
-            async with create_session() as session:
-                kwargs["session"] = session
+    from database import engine
+    if asyncio.iscoroutinefunction(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            if "db_session" not in kwargs or not isinstance(kwargs["db_session"], Session):
+                session_func = sessionmaker(bind=engine)
+                db_session = session_func()
+                kwargs["db_session"] = db_session
                 return await func(*args, **kwargs)
-        else:
-            return await func(*args, **kwargs)
+            else:
+                return await func(*args, **kwargs)
+    else:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if "db_session" not in kwargs or not isinstance(kwargs["db_session"], Session):
+                session_func = sessionmaker(bind=engine)
+                db_session = session_func()
+                kwargs["db_session"] = db_session
+                return func(*args, **kwargs)
+            else:
+                return func(*args, **kwargs)
 
     return wrapper

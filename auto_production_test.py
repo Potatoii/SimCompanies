@@ -96,5 +96,16 @@ async def auto_order(*, simclient: SimClient = None):
             logger.info(response.json())
 
 
+@sim_client
+async def auto_fetch(building_id, *, simclient: SimClient = None):
+    """
+    自动收钱
+    """
+    fetch_api = f"https://www.simcompanies.com/api/v2/order/take/{building_id}/"
+    response = await simclient.post(fetch_api, {"production": False})
+    logger.info(response.json())
+
+
+
 if __name__ == "__main__":
-    asyncio.run(auto_order())
+    asyncio.run(auto_fetch(28032980))
