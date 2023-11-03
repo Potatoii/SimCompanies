@@ -1,11 +1,22 @@
 import asyncio
 
+from sqlalchemy.orm import Session
+
 import settings
+from decorators import sim_client, db_client
 from main import get_building_info
 from sim_request import SimClient
 
 
-async def auto_production(product_id: int, quantity: int):
+@sim_client
+@db_client
+async def auto_production(
+        product_id: int,
+        quantity: int,
+        *,
+        simclient: SimClient = None,
+        db_session: Session = None
+):
     """
     自动生产
     获取该产品的生产建筑, 所需原料

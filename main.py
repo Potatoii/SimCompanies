@@ -4,6 +4,7 @@ from decorators import sim_client
 from sim_request import SimClient
 
 building_chart = {
+    "1": "汽车厂",
     "2": "车行",
     "L": "电子产品厂",
 }

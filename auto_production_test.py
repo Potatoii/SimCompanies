@@ -1,14 +1,17 @@
 import asyncio
 
+from sqlalchemy.orm import Session
+
 from bark import bark_notification
-from decorators import sim_client
+from decorators import sim_client, db_client
 from log_utils import logger
 from main import get_building_info, get_resources
 from sim_request import SimClient
 
 
 @sim_client
-async def auto_production_on_board_computer(quantity: int, *, simclient: SimClient = None):
+@db_client
+async def auto_production_on_board_computer(quantity: int, *, simclient: SimClient = None, db_session: Session = None):
     """
     自动生产车载电脑
     """
