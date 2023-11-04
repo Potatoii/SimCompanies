@@ -98,4 +98,4 @@ async def main(*, db_session: Session = None):
 
 
 if __name__ == "__main__":
-    asyncio.run(update_items())
+    asyncio.run(main())

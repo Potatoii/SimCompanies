@@ -15,7 +15,7 @@ async def building_monitor():
         while True:
             building_info_list = await get_building_info(simclient=simclient)
             for building_info in building_info_list:
-                if building_info["category"] == "sales" and building_info.get("can_fetch"):
+                if building_info.get("can_fetch"):
                     await auto_fetch(building_info["id"], simclient=simclient)
                 if building_info["status"] == "idle":
                     if building_info["id"] not in idle_building_list:

@@ -9,18 +9,13 @@ building_chart = {
     "L": "电子产品厂",
 }
 
-resource_chart = {
-    20: "处理器",
-    21: "电子元件",
-}
-
 
 def date_to_timestamp(date: str) -> int:
     date_object = datetime.fromisoformat(date)
     return int(date_object.timestamp())
 
 
-def add_resource_info(building_dict, resource_info):
+def add_resource_info(building_dict: dict, resource_info: dict) -> dict:
     building_dict["status"] = "producing"
     building_dict["resource_amount"] = resource_info["amount"]
     building_dict["resource_item_id"] = resource_info["kind"]
@@ -30,7 +25,7 @@ def add_resource_info(building_dict, resource_info):
     return building_dict
 
 
-def add_sales_info(building_dict, sales_info):
+def add_sales_info(building_dict: dict, sales_info: dict) -> dict:
     building_dict["status"] = "selling"
     building_dict["selling_amount"] = sales_info["amount"]
     building_dict["selling_price"] = sales_info["price"]
@@ -40,7 +35,7 @@ def add_sales_info(building_dict, sales_info):
     return building_dict
 
 
-def add_busy_info(building_dict, business_info):
+def add_busy_info(building_dict: dict, business_info: dict) -> dict:
     building_dict["can_fetch"] = business_info.get("canFetch", False)
     business_start = date_to_timestamp(business_info["started"])
     building_dict["business_duration"] = business_info["duration"]
@@ -61,10 +56,9 @@ def add_busy_info(building_dict, business_info):
     return building_dict
 
 
-def process_building_info(building_info):
+def process_building_info(building_info: dict) -> dict:
     building_dict = {
         "id": building_info["id"],
-        "name": building_info["name"],
         "size": building_info["size"],
         "kind": building_chart[building_info["kind"]],
         "category": building_info["category"]
@@ -78,35 +72,25 @@ def process_building_info(building_info):
 
 
 @sim_client
-async def get_building_info(*, simclient: SimClient = None):
+async def get_building_info(*, simclient: SimClient = None) -> dict:
     building_api = "https://www.simcompanies.com/api/v2/companies/me/buildings/"
     response = await simclient.get(building_api)
     building_info_list = response.json()
-    buildings = []
+    building_dict = {}
     for building_info in building_info_list:
-        buildings.append(process_building_info(building_info))
-    return buildings
+        building_dict[building_info["name"]] = process_building_info(building_info)
+    return building_dict
 
 
 @sim_client
-async def get_pa_chat(*, simclient: SimClient = None):
-    pa_api = "https://www.simcompanies.com/api/messages_by_company/?company=Your Personal Assistant&company_id=1352&last_id=1000000000"
-    response = await simclient.get(pa_api)
-    response = response.json()
-    messages = response["messages"]
-    send_url = "https://www.simcompanies.com/api/v2/message/"
-    timestamp = int(datetime.now().timestamp() * 1000)
-    send_response = await simclient.post(send_url,
-                                      {"companyId": 3463945, "body": "test, no reply", "token": timestamp})
-    return send_response.text
-
-
-@sim_client
-async def get_resources(*, simclient: SimClient = None):
-    resources_api = "https://www.simcompanies.com/api/v2/resources/"
-    response = await simclient.get(resources_api)
-    response = response.json()
+async def auto_fetch(building_id, *, simclient: SimClient = None):
+    """
+    自动收钱
+    """
+    fetch_api = f"https://www.simcompanies.com/api/v2/order/take/{building_id}/"
+    response = await simclient.post(fetch_api, {"production": False})
     return response
+
 
 
 if __name__ == "__main__":

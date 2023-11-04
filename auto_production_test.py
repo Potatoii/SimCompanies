@@ -1,7 +1,5 @@
 import asyncio
 
-from sqlalchemy.orm import Session
-
 from bark import bark_notification
 from decorators import sim_client, db_client
 from log_utils import logger
@@ -11,15 +9,16 @@ from sim_request import SimClient
 
 @sim_client
 @db_client
-async def auto_production_on_board_computer(quantity: int, *, simclient: SimClient = None, db_session: Session = None):
+async def auto_production_on_board_computer(quantity: int, *, simclient: SimClient = None):
     """
     自动生产车载电脑
     """
     factory_id = 28062782
     product_api = f"https://www.simcompanies.com/api/v1/buildings/{factory_id}/busy/"
     buildings = await get_building_info(simclient=simclient)
-    for building_info in buildings:
-        if building_info["id"] == factory_id:
+    for building_id in buildings:
+        building_info = buildings[building_id]
+        if building_id == factory_id:
             if building_info["status"] == "idle":
                 resources = await get_resources(simclient=simclient)
                 processor_count = 0
@@ -107,7 +106,6 @@ async def auto_fetch(building_id, *, simclient: SimClient = None):
     fetch_api = f"https://www.simcompanies.com/api/v2/order/take/{building_id}/"
     response = await simclient.post(fetch_api, {"production": False})
     logger.info(response.json())
-
 
 
 if __name__ == "__main__":

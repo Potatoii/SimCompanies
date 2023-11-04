@@ -15,7 +15,7 @@ def select_example():
     session_func = sessionmaker(bind=engine)
     db_session = session_func()
     # 执行查询
-    result = db_session.execute(text("SELECT * FROM item WHERE item_id = 3"))
+    result = db_session.execute(text("SELECT * FROM item"))  # noqa
 
     # 打印查询结果
     for row in result:
