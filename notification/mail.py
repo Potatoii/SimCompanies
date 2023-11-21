@@ -32,11 +32,11 @@ class MailSchema(BaseModel):
     mail_server: MailServerSchema = MailServerSchema()  # 邮件服务器
     mail_from: str  # 发件人
     mail_to: list  # 收件人
-    cc_to: Optional[list]  # 抄送
+    cc_to: Optional[list] = None # 抄送
     subject: str  # 邮件主题
     content: str  # 邮件内容
-    content_images: Optional[dict]  # 邮件内容中的图片
-    attachments: Optional[list]  # 附件
+    content_images: Optional[dict] = None  # 邮件内容中的图片
+    attachments: Optional[list] = None  # 附件
 
 
 async def mail_notification(mail_params: MailSchema):

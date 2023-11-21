@@ -12,8 +12,8 @@ async def setup():
         email = input("请输入您的Simcompanies账号: ")
         password = input("请输入您的Simcompanies密码: ")
         while True:
-            use_mail = input("是否使用邮箱通知? 输入'y'表示是，其他输入表示否: ")
-            if use_mail.lower() == "y":
+            # use_mail = input("是否使用邮箱通知? 输入'y'表示是，其他输入表示否: ")
+            if input("是否使用邮箱通知? 输入'y'表示是，其他输入表示否: ").lower() == "y":
                 mail_host = input("请输入smtp的地址[例如: smtp.qq.com]: ")
                 mail_port = input("请输入smtp的端口: ")
                 mail_username = input("请输入smtp邮箱: ")
@@ -35,14 +35,14 @@ async def setup():
                     result = await mail_notification(test_params)
                     if result and not result[0]:
                         logger.info("测试邮件发送成功, 请查收")
-                        mail_status = input("是否使用该邮箱通知? 输入'y'表示是，其他输入表示否: ")
-                        if mail_status.lower() == "y":
+                        # mail_status = input("是否使用该邮箱通知? 输入'y'表示是，其他输入表示否: ")
+                        if input("是否使用该邮箱通知? 输入'y'表示是，其他输入表示否: ").lower() == "y":
                             pass
                         else:
                             continue
                 except Exception as e:
                     logger.error(f"邮件发送失败: {e}")
-                    logger.error(f"您输入的邮箱配置为: {mail_server.json()}")
+                    logger.error(f"您输入的邮箱配置为: {mail_server.model_dump_json()}")
                     logger.error(f"请检查邮箱配置是否正确")
                     continue
             else:
@@ -50,8 +50,8 @@ async def setup():
                 mail_port = ""
                 mail_username = ""
                 mail_password = ""
-            use_bark = input("是否使用bark通知? 输入'y'表示是，其他输入表示否: ")
-            if use_bark.lower() == "y":
+            # use_bark = input("是否使用bark通知? 输入'y'表示是，其他输入表示否: ")
+            if input("是否使用bark通知? 输入'y'表示是，其他输入表示否: ").lower() == "y":
                 bark_key = input("请输入bark的access_key: ")
             else:
                 bark_key = ""
@@ -72,7 +72,7 @@ async def setup():
                     "username": mail_username,
                     "password": mail_password
                 },
-                "bark_access_key": bark_key
+                "bark_key": bark_key  # noqa
             }, indent=2))
         logger.info("设置完成，信息已经被保存在config.json文件中。")
         logger.info("如需修改, 请删除config.json文件后重新运行程序。")

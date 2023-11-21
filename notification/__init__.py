@@ -5,7 +5,7 @@ from notification.mail import mail_notification, MailSchema
 
 class Notification:
     def __init__(self):
-        self.bark_status = True if settings.bark_access_key else False
+        self.bark_status = True if settings.bark_key else False
         self.mail_status = True if settings.mail_config["username"] else False
 
     async def notify(self, message: str):

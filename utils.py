@@ -3,12 +3,6 @@ from datetime import datetime
 from decorators import sim_client
 from sim_request import SimClient
 
-building_chart = {
-    "1": "汽车厂",
-    "2": "车行",
-    "L": "电子产品厂",
-}
-
 
 def date_to_timestamp(date: str) -> int:
     date_object = datetime.fromisoformat(date)
@@ -60,7 +54,6 @@ def process_building_info(building_info: dict) -> dict:
     building_dict = {
         "name": building_info["name"],
         "size": building_info["size"],
-        "kind": building_chart[building_info["kind"]],
         "category": building_info["category"]
     }
     business_info = building_info.get("busy")
