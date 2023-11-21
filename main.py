@@ -1,115 +1,91 @@
-from datetime import datetime
+import importlib
+import json
 
-from decorators import sim_client
-from sim_request import SimClient
-
-building_chart = {
-    "1": "汽车厂",
-    "2": "车行",
-    "L": "电子产品厂",
-}
-
-resource_chart = {
-    20: "处理器",
-    21: "电子元件",
-}
+import settings
+from bot import building_status_monitor
+from log_utils import logger
+from notification.mail import MailServerSchema, MailSchema, mail_notification
 
 
-def date_to_timestamp(date: str) -> int:
-    date_object = datetime.fromisoformat(date)
-    return int(date_object.timestamp())
+async def setup():
+    if not settings.user_config["email"]:
+        email = input("请输入您的Simcompanies账号: ")
+        password = input("请输入您的Simcompanies密码: ")
+        while True:
+            use_mail = input("是否使用邮箱通知? 输入'y'表示是，其他输入表示否: ")
+            if use_mail.lower() == "y":
+                mail_host = input("请输入smtp的地址[例如: smtp.qq.com]: ")
+                mail_port = input("请输入smtp的端口: ")
+                mail_username = input("请输入smtp邮箱: ")
+                mail_password = input("请输入smtp密码: ")
+                mail_server = MailServerSchema(
+                    host=mail_host,
+                    port=int(mail_port),
+                    username=mail_username,
+                    password=mail_password,
+                )
+                test_params = MailSchema(
+                    mail_server=mail_server,
+                    mail_from=mail_username,
+                    mail_to=[mail_username],
+                    subject="test",
+                    content="test",
+                )
+                try:
+                    result = await mail_notification(test_params)
+                    if result and not result[0]:
+                        logger.info("测试邮件发送成功, 请查收")
+                        mail_status = input("是否使用该邮箱通知? 输入'y'表示是，其他输入表示否: ")
+                        if mail_status.lower() == "y":
+                            pass
+                        else:
+                            continue
+                except Exception as e:
+                    logger.error(f"邮件发送失败: {e}")
+                    logger.error(f"您输入的邮箱配置为: {mail_server.json()}")
+                    logger.error(f"请检查邮箱配置是否正确")
+                    continue
+            else:
+                mail_host = ""
+                mail_port = ""
+                mail_username = ""
+                mail_password = ""
+            use_bark = input("是否使用bark通知? 输入'y'表示是，其他输入表示否: ")
+            if use_bark.lower() == "y":
+                bark_key = input("请输入bark的access_key: ")
+            else:
+                bark_key = ""
+            if not mail_username and not bark_key:
+                logger.warning("请至少选择一种通知方式")
+            else:
+                break
+
+        with open(f"{settings.root_path}/config.json", "w") as file:
+            file.write(json.dumps({
+                "user_config": {
+                    "email": email,
+                    "password": password
+                },
+                "mail_config": {
+                    "host": mail_host,
+                    "port": int(mail_port) if mail_port else "",
+                    "username": mail_username,
+                    "password": mail_password
+                },
+                "bark_access_key": bark_key
+            }, indent=2))
+        logger.info("设置完成，信息已经被保存在config.json文件中。")
+        logger.info("如需修改, 请删除config.json文件后重新运行程序。")
+        importlib.reload(settings)
 
 
-def add_resource_info(building_dict, resource_info):
-    building_dict["status"] = "producing"
-    building_dict["resource_amount"] = resource_info["amount"]
-    building_dict["resource_item_id"] = resource_info["kind"]
-    building_dict["resource_item_name"] = resource_info["name"]
-    building_dict["resource_quality"] = resource_info["quality"]
-    building_dict["resource_unit_cost"] = round(resource_info["unitCost"], 2)
-    return building_dict
-
-
-def add_sales_info(building_dict, sales_info):
-    building_dict["status"] = "selling"
-    building_dict["selling_amount"] = sales_info["amount"]
-    building_dict["selling_price"] = sales_info["price"]
-    building_dict["selling_item_id"] = sales_info["kind"]
-    building_dict["selling_item_name"] = sales_info["name"]
-    building_dict["selling_remaining_profit"] = sales_info["remainingProfit"]
-    return building_dict
-
-
-def add_busy_info(building_dict, business_info):
-    building_dict["can_fetch"] = business_info.get("canFetch", False)
-    business_start = date_to_timestamp(business_info["started"])
-    building_dict["business_duration"] = business_info["duration"]
-    building_dict["business_start"] = datetime.fromtimestamp(business_start).strftime("%Y-%m-%d %H:%M:%S")
-    building_dict["business_end"] = datetime.fromtimestamp(
-        business_start + business_info["duration"]
-    ).strftime("%Y-%m-%d %H:%M:%S")
-    building_dict["business_time_left"] = (
-            business_start + business_info["duration"] - int(datetime.now().timestamp())
-    )
-    building_dict["expanding"] = business_info.get("expanding", False)
-    if building_dict["expanding"]:
-        building_dict["status"] = "expanding"
-    if business_info.get("sales_order"):
-        building_dict = add_sales_info(building_dict, business_info["sales_order"])
-    if business_info.get("resource"):
-        building_dict = add_resource_info(building_dict, business_info["resource"])
-    return building_dict
-
-
-def process_building_info(building_info):
-    building_dict = {
-        "id": building_info["id"],
-        "name": building_info["name"],
-        "size": building_info["size"],
-        "kind": building_chart[building_info["kind"]],
-        "category": building_info["category"]
-    }
-    business_info = building_info.get("busy")
-    if business_info:
-        building_dict = add_busy_info(building_dict, business_info)
-    else:
-        building_dict["status"] = "idle"
-    return building_dict
-
-
-@sim_client
-async def get_building_info(*, simclient: SimClient = None):
-    building_api = "https://www.simcompanies.com/api/v2/companies/me/buildings/"
-    response = await simclient.get(building_api)
-    building_info_list = response.json()
-    buildings = []
-    for building_info in building_info_list:
-        buildings.append(process_building_info(building_info))
-    return buildings
-
-
-@sim_client
-async def get_pa_chat(*, simclient: SimClient = None):
-    pa_api = "https://www.simcompanies.com/api/messages_by_company/?company=Your Personal Assistant&company_id=1352&last_id=1000000000"
-    response = await simclient.get(pa_api)
-    response = response.json()
-    messages = response["messages"]
-    send_url = "https://www.simcompanies.com/api/v2/message/"
-    timestamp = int(datetime.now().timestamp() * 1000)
-    send_response = await simclient.post(send_url,
-                                      {"companyId": 3463945, "body": "test, no reply", "token": timestamp})
-    return send_response.text
-
-
-@sim_client
-async def get_resources(*, simclient: SimClient = None):
-    resources_api = "https://www.simcompanies.com/api/v2/resources/"
-    response = await simclient.get(resources_api)
-    response = response.json()
-    return response
+async def main():
+    await setup()
+    logger.info("开始监控建筑状态")
+    await building_status_monitor()
 
 
 if __name__ == "__main__":
     import asyncio
 
-    print(asyncio.run(get_building_info()))
+    asyncio.run(main())

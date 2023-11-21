@@ -2,8 +2,6 @@ import asyncio
 import functools
 from typing import Callable
 
-from sqlalchemy.orm import sessionmaker, Session
-
 
 def httpx_client(func: Callable):
     """
@@ -55,8 +53,8 @@ def retry(max_retries=3, delay=1, notice=False):
                 except Exception as e:
                     if i == max_retries - 1:
                         if notice:
-                            from bark import bark_notification
-                            await bark_notification(f"{func.__name__}执行失败: {e}")
+                            from notification import notifier
+                            await notifier.notify(f"{func.__name__}执行失败: {e}")
                         raise e
                     else:
                         await asyncio.sleep(delay)
@@ -64,33 +62,3 @@ def retry(max_retries=3, delay=1, notice=False):
         return wrapper
 
     return decorator
-
-
-def db_client(func: Callable):
-    """
-    database装饰器，需配合关键字参数db_session使用
-    """
-
-    from database import engine
-    if asyncio.iscoroutinefunction(func):
-        @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
-            if "db_session" not in kwargs or not isinstance(kwargs["db_session"], Session):
-                session_func = sessionmaker(bind=engine)
-                db_session = session_func()
-                kwargs["db_session"] = db_session
-                return await func(*args, **kwargs)
-            else:
-                return await func(*args, **kwargs)
-    else:
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            if "db_session" not in kwargs or not isinstance(kwargs["db_session"], Session):
-                session_func = sessionmaker(bind=engine)
-                db_session = session_func()
-                kwargs["db_session"] = db_session
-                return func(*args, **kwargs)
-            else:
-                return func(*args, **kwargs)
-
-    return wrapper

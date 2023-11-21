@@ -8,7 +8,7 @@ class Notification:
         self.bark_status = True if settings.bark_access_key else False
         self.mail_status = True if settings.mail_config["username"] else False
 
-    async def notification(self, message: str):
+    async def notify(self, message: str):
         """
         通知
         """
@@ -24,7 +24,9 @@ class Notification:
             await mail_notification(mail_params)
 
 
+notifier = Notification()
+
 if __name__ == "__main__":
     import asyncio
 
-    asyncio.run(Notification().notification("test"))
+    asyncio.run(Notification().notify("test"))

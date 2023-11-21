@@ -39,8 +39,8 @@ class MailSchema(BaseModel):
     attachments: Optional[list]  # 附件
 
 
-async def mail_notification(mail_params: MailSchema) -> dict:
-    logger.info(f"进入发送邮件流程")
+async def mail_notification(mail_params: MailSchema):
+    logger.debug(f"进入发送邮件流程")
     # 邮件信息
     mail_message = MIMEMultipart()
     mail_message["From"] = mail_params.mail_from
@@ -75,15 +75,6 @@ async def mail_notification(mail_params: MailSchema) -> dict:
                 filename=os.path.basename(attachment),
             )
             mail_message.attach(attachment_mime)
-    mailrecord_params = {
-        "mail_from": mail_params.mail_from,
-        "mail_to": mail_params.mail_to,
-        "cc_to": mail_params.cc_to,
-        "subject": mail_params.subject,
-        "content": mail_params.content,
-        "content_images": mail_params.content_images,
-        "attachments": mail_params.attachments,
-    }
     try:
         async with aiosmtplib.SMTP(
                 hostname=mail_params.mail_server.host,
@@ -94,9 +85,9 @@ async def mail_notification(mail_params: MailSchema) -> dict:
         ) as smtp:
             await smtp.ehlo()
             logger.debug(f"开始登录邮箱")
-            await smtp.login(
-                mail_params.mail_server.username, mail_params.mail_server.password
-            )
+            # await smtp.login(
+            #     mail_params.mail_server.username, mail_params.mail_server.password
+            # )
             logger.debug(f"登录邮箱成功")
             logger.debug(f"开始发送邮件")
             result = await smtp.sendmail(
@@ -105,14 +96,14 @@ async def mail_notification(mail_params: MailSchema) -> dict:
                 mail_message.as_string(),
                 timeout=30,
             )
-            logger.info(f"邮件发送成功, {result}")
+            logger.debug(f"邮件发送成功, {result}")
+            return result
     except aiosmtplib.SMTPResponseException as e:
         logger.error(f"邮件发送失败: {e}")
         raise e
     except aiosmtplib.SMTPException as e:
         logger.error(f"邮件发送失败: {e}")
         raise e
-    return mailrecord_params
 
 
 if __name__ == "__main__":

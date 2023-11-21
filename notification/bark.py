@@ -14,7 +14,7 @@ async def bark_notification(message: str, *, client: httpx.AsyncClient = None):
     try:
         response = await client.get(url)
         if response.status_code == 200:
-            logger.info(f"bark通知成功: {message}")
+            logger.debug(f"bark通知成功: {message}")
         else:
             logger.error(f"bark通知失败: {message}, {response.text}")
     except Exception as e:
