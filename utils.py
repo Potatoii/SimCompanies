@@ -58,7 +58,7 @@ def add_busy_info(building_dict: dict, business_info: dict) -> dict:
 
 def process_building_info(building_info: dict) -> dict:
     building_dict = {
-        "id": building_info["id"],
+        "name": building_info["name"],
         "size": building_info["size"],
         "kind": building_chart[building_info["kind"]],
         "category": building_info["category"]
@@ -78,7 +78,7 @@ async def get_building_info(*, simclient: SimClient = None) -> dict:
     building_info_list = response.json()
     building_dict = {}
     for building_info in building_info_list:
-        building_dict[building_info["name"]] = process_building_info(building_info)
+        building_dict[building_info["id"]] = process_building_info(building_info)
     return building_dict
 
 

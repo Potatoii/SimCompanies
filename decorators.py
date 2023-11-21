@@ -41,7 +41,7 @@ def sim_client(func: Callable):
     return wrapper
 
 
-def retry(max_retries=3, delay=1):
+def retry(max_retries=3, delay=1, notice=False):
     """
     重试装饰器
     """
@@ -54,6 +54,9 @@ def retry(max_retries=3, delay=1):
                     return await func(*args, **kwargs)
                 except Exception as e:
                     if i == max_retries - 1:
+                        if notice:
+                            from bark import bark_notification
+                            await bark_notification(f"{func.__name__}执行失败: {e}")
                         raise e
                     else:
                         await asyncio.sleep(delay)

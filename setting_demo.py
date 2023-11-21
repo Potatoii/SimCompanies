@@ -15,3 +15,11 @@ mysql_config = dict(
     password="",
     db="SimCompanies"
 )
+bark_access_key = ""
+
+mail_config = dict(
+    host="smtp.qq.com",
+    port=465,
+    username="",
+    password="",
+)
