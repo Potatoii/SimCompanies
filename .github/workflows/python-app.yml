@@ -14,9 +14,7 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3.10
@@ -27,6 +25,17 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Create JSON file
+      env:
+        EMAIL: ${{ secrets.EMAIL }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+        BARK_KEY: ${{ secrets.BARK_KEY }}
+      run: |
+        echo '{
+          "user_config": { "email": "'"${EMAIL}"'", "password": "'"${PASSWORD}"'"},
+          "mail_config": { "host": "smtp.qq.com", "port": 465, "username": "", "password": "" },
+          "bark_key": "'"${BARK_KEY}"'"
+        }' > config.json
     - name: run
       run: |
         python main.py
