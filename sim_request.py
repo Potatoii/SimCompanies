@@ -1,4 +1,3 @@
-import json
 import time
 from hashlib import md5
 
@@ -13,7 +12,20 @@ from log_utils import logger
 class SimClient:
     def __init__(self):
         self.homepage_url = "https://www.simcompanies.com/zh/"
-        self.headers = {}
+        self.headers = {
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json;charset=UTF-8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+            "Connection": "keep-alive",
+            "Host": "www.simcompanies.com",
+            "Referer": "https://www.simcompanies.com/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.76",
+            "X-Tz-Offset": "-480"
+        }
         self.cookies: Cookies = Cookies()
         self.client: AsyncClient = httpx.AsyncClient(timeout=60)
 
@@ -34,44 +46,29 @@ class SimClient:
         cookies = response.cookies
         self.cookies = cookies
 
-    def generate_headers(self, url: str):
+    def update_headers(self, url: str):
         timestamp = int(time.time() * 1000)
         api = url.replace("https://www.simcompanies.com", "")
-        headers = {
-            "Accept": "application/json, text/plain, */*", "Content-Type": "application/json;charset=UTF-8",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-            "Connection": "keep-alive",
-            "Host": "www.simcompanies.com",
-            "Referer": "https://www.simcompanies.com/",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.76",
+        self.headers.update({
             "X-Prot": md5(f"{api}{timestamp}".encode("utf-8")).hexdigest(),
             "X-Ts": str(timestamp),
-            "X-Tz-Offset": "-480"
-        }
-        self.headers = headers
+        })
 
-    @retry()
-    async def get(self, url: str):
-        self.generate_headers(url)
-        if not self.cookies:
-            await self.generate_cookies()
-            self.headers["X-Csrftoken"] = self.cookies.get("csrftoken")
-        response = await self.client.get(url, headers=self.headers, cookies=self.cookies)
-        return response
-
-    @retry()
-    async def post(self, url: str, body: dict):
-        self.generate_headers(url)
+    async def request(self, method: str, url: str, body: dict = None):
+        self.update_headers(url)
         if not self.cookies:
             await self.generate_cookies()
         self.headers["X-Csrftoken"] = self.cookies.get("csrftoken")
-        self.headers["Content-Length"] = str(len(json.dumps(body)))
-        response = await self.client.post(url, json=body, headers=self.headers, cookies=self.cookies)
+        response = await self.client.request(method, url, json=body, headers=self.headers, cookies=self.cookies)
         return response
+
+    @retry()
+    async def get(self, url: str):
+        return await self.request("GET", url)
+
+    @retry()
+    async def post(self, url: str, body: dict):
+        return await self.request("POST", url, body)
 
     async def login(self):
         auth_api = "https://www.simcompanies.com/api/v2/auth/email/auth/"
