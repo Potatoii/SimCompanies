@@ -8,23 +8,23 @@ import settings
 
 def mkdir(path: str) -> bool:
     path = path.rstrip("/")
-    is_exists = os.path.exists(path)
-    if not is_exists:
-        os.makedirs(path)
-        return True
-    else:
-        return False
+    os.makedirs(path, exist_ok=True)
+    return os.path.exists(path)
 
 
 class Logger:
     def __init__(self, log_name: str = settings.log_name):
         root_path = settings.root_path
-        log_path = f"{root_path}/logs/"
+        log_path = os.path.join(root_path, "logs")
         mkdir(log_path)
-        log_file_path = f"{root_path}/logs/{log_name}"
-        self.logger = logging
-        self.logger.remove()
-        self.logger.add(
+        log_file_path = os.path.join(log_path, log_name)
+        self._logger = logging
+        self._logger.remove()
+        self._add_stdout_logger()
+        self._add_file_logger(log_file_path)
+
+    def _add_stdout_logger(self):
+        self._logger.add(
             sys.stdout,
             level=settings.stdout_level,
             format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
@@ -34,7 +34,9 @@ class Logger:
             diagnose=False,
             enqueue=False,
         )
-        self.logger.add(
+
+    def _add_file_logger(self, log_file_path):
+        self._logger.add(
             log_file_path,
             level=settings.file_level,
             format="{time:YYYY-MM-DD HH:mm:ss} | "
@@ -45,11 +47,12 @@ class Logger:
             diagnose=False,
         )
 
-    def get_logger(self):
-        return self.logger
+    @property
+    def logger(self):
+        return self._logger
 
 
-logger = Logger().get_logger()
+logger = Logger().logger
 
 if __name__ == "__main__":
     logger.debug("debug")
