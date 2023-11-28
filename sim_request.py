@@ -62,11 +62,11 @@ class SimClient:
         response = await self.client.request(method, url, json=body, headers=self.headers, cookies=self.cookies)
         return response
 
-    @retry()
+    @retry(notice=True)
     async def get(self, url: str):
         return await self.request("GET", url)
 
-    @retry()
+    @retry(notice=True)
     async def post(self, url: str, body: dict):
         return await self.request("POST", url, body)
 
