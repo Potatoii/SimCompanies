@@ -11,7 +11,6 @@ async def setup():
         email = input("请输入您的Simcompanies账号: ")
         password = input("请输入您的Simcompanies密码: ")
         while True:
-            # use_mail = input("是否使用邮箱通知? 输入'y'表示是，其他输入表示否: ")
             if input("是否使用邮箱通知? 输入'y'表示是，其他输入表示否: ").lower() == "y":
                 mail_host = input("请输入smtp的地址[例如: smtp.qq.com]: ")
                 mail_port = input("请输入smtp的端口: ")
