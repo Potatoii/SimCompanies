@@ -1,7 +1,46 @@
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel
 
 from decorators import sim_client
 from sim_request import SimClient
+
+
+class ResourceInfo(BaseModel):
+    amount: int
+    kind: int
+    name: str
+    quality: int
+    unit_cost: float
+
+
+class SalesInfo(BaseModel):
+    amount: int
+    price: float
+    kind: int
+    name: str
+    remaining_profit: float
+
+
+class BusinessInfo(BaseModel):
+    can_fetch: bool = False
+    duration: float
+    start: str
+    end: str
+    time_left: int = None
+    expanding: bool = False
+    sales_order: Optional[SalesInfo] = None
+    resource: Optional[ResourceInfo] = None
+
+
+class BuildingInfo(BaseModel):
+    id: int
+    name: str
+    size: int
+    category: str
+    status: str
+    busy: BusinessInfo = None
 
 
 def date_to_timestamp(date: str) -> int:
@@ -9,59 +48,62 @@ def date_to_timestamp(date: str) -> int:
     return int(date_object.timestamp())
 
 
-def add_resource_info(building_dict: dict, resource_info: dict) -> dict:
+def add_resource_info(building_dict: dict, resource: dict) -> dict:
     building_dict["status"] = "producing"
-    building_dict["resource_amount"] = resource_info["amount"]
-    building_dict["resource_item_id"] = resource_info["kind"]
-    building_dict["resource_item_name"] = resource_info["name"]
-    building_dict["resource_quality"] = resource_info["quality"]
-    building_dict["resource_unit_cost"] = round(resource_info["unitCost"], 2)
+    building_dict["resource"] = ResourceInfo(
+        amount=resource.get("amount"),
+        kind=resource.get("kind"),
+        name=resource.get("name"),
+        quality=resource.get("quality"),
+        unit_cost=resource.get("unitCost"),
+    )
     return building_dict
 
 
-def add_sales_info(building_dict: dict, sales_info: dict) -> dict:
+def add_sales_info(building_dict: dict, sales_order: dict) -> dict:
     building_dict["status"] = "selling"
-    building_dict["selling_amount"] = sales_info["amount"]
-    building_dict["selling_price"] = sales_info["price"]
-    building_dict["selling_item_id"] = sales_info["kind"]
-    building_dict["selling_item_name"] = sales_info["name"]
-    building_dict["selling_remaining_profit"] = sales_info["remainingProfit"]
+    building_dict["sales_order"] = SalesInfo(
+        amount=sales_order.get("amount"),
+        price=sales_order.get("price"),
+        kind=sales_order.get("kind"),
+        name=sales_order.get("name"),
+        remaining_profit=sales_order.get("remainingProfit"),
+    )
     return building_dict
 
 
 def add_busy_info(building_dict: dict, business_info: dict) -> dict:
-    building_dict["can_fetch"] = business_info.get("canFetch", False)
     business_start = date_to_timestamp(business_info["started"])
-    building_dict["business_duration"] = business_info["duration"]
-    building_dict["business_start"] = datetime.fromtimestamp(business_start).strftime("%Y-%m-%d %H:%M:%S")
-    building_dict["business_end"] = datetime.fromtimestamp(
-        business_start + business_info["duration"]
-    ).strftime("%Y-%m-%d %H:%M:%S")
-    building_dict["business_time_left"] = (
-            business_start + business_info["duration"] - int(datetime.now().timestamp())
-    )
-    building_dict["expanding"] = business_info.get("expanding", False)
-    if building_dict["expanding"]:
-        building_dict["status"] = "expanding"
-    if business_info.get("sales_order"):
-        building_dict = add_sales_info(building_dict, business_info["sales_order"])
-    if business_info.get("resource"):
-        building_dict = add_resource_info(building_dict, business_info["resource"])
-    return building_dict
-
-
-def process_building_info(building_info: dict) -> dict:
-    building_dict = {
-        "name": building_info["name"],
-        "size": building_info["size"],
-        "category": building_info["category"]
-    }
-    business_info = building_info.get("busy")
-    if business_info:
-        building_dict = add_busy_info(building_dict, business_info)
+    business_end = business_start + business_info["duration"]
+    sales_order = business_info.get("sales_order")
+    if sales_order:
+        building_dict = add_sales_info(building_dict, sales_order)
+        business_info.pop("sales_order")
     else:
-        building_dict["status"] = "idle"
+        sales_order = None
+    resource = business_info.get("resource")
+    if resource:
+        building_dict = add_resource_info(building_dict, resource)
+        business_info.pop("resource")
+    else:
+        resource = None
+    building_dict["busy"] = BusinessInfo(
+        start=datetime.fromtimestamp(business_start).strftime("%Y-%m-%d %H:%M:%S"),
+        end=datetime.fromtimestamp(business_end).strftime("%Y-%m-%d %H:%M:%S"),
+        time_left=business_end - int(datetime.now().timestamp()),
+        sales_order=building_dict.get("sales_order"),
+        resource=building_dict.get("resource"),
+        **business_info,
+    )
     return building_dict
+
+
+def process_building_info(building_info: dict) -> BuildingInfo:
+    building_dict = building_info.copy()
+    building_dict["status"] = "idle"
+    if building_info.get("busy"):
+        building_dict = add_busy_info(building_dict, building_info["busy"])
+    return BuildingInfo(**building_dict)
 
 
 @sim_client
@@ -74,8 +116,17 @@ async def get_building_info(*, simclient: SimClient = None) -> dict:
         building_dict[building_info["id"]] = process_building_info(building_info)
     return building_dict
 
-
-if __name__ == "__main__":
-    import asyncio
-
-    print(asyncio.run(get_building_info()))
+# if __name__ == "__main__":
+#     import asyncio
+#     import json
+#     from typing import Dict
+#
+#     building_dict: Dict[int, BuildingInfo] = asyncio.run(get_building_info())
+#     for building_id, building_info in building_dict.items():
+#         print(
+#             json.dumps(
+#                 building_info.model_dump(),
+#                 ensure_ascii=False,
+#                 indent=2
+#             )
+#         )

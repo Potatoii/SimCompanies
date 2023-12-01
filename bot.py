@@ -1,9 +1,10 @@
 import asyncio
+from typing import Dict
 
 from log_utils import logger
 from notification import notifier
 from sim_request import SimClient
-from utils import get_building_info
+from utils import get_building_info, BuildingInfo
 
 
 async def building_status_monitor():
@@ -13,11 +14,11 @@ async def building_status_monitor():
     idle_building_set = set()
     async with SimClient() as simclient:
         while True:
-            building_dict = await get_building_info(simclient=simclient)
+            building_dict: Dict[int, BuildingInfo] = await get_building_info(simclient=simclient)
             for building_id, building_info in building_dict.items():
-                building_name = building_info["name"]
+                building_name = building_info.name
                 is_idle = building_id in idle_building_set
-                if building_info["status"] == "idle":
+                if building_info.status == "idle":
                     if not is_idle:
                         logger.info(f"{building_name}已空闲")
                         await notifier.notify(f"{building_name}已空闲")
