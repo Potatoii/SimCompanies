@@ -38,6 +38,7 @@ class BuildingInfo(BaseModel):
     id: int
     name: str
     size: int
+    kind: str
     category: str
     status: str
     busy: BusinessInfo = None
@@ -116,17 +117,18 @@ async def get_building_info(*, simclient: SimClient = None) -> dict:
         building_dict[building_info["id"]] = process_building_info(building_info)
     return building_dict
 
-# if __name__ == "__main__":
-#     import asyncio
-#     import json
-#     from typing import Dict
-#
-#     building_dict: Dict[int, BuildingInfo] = asyncio.run(get_building_info())
-#     for building_id, building_info in building_dict.items():
-#         print(
-#             json.dumps(
-#                 building_info.model_dump(),
-#                 ensure_ascii=False,
-#                 indent=2
-#             )
-#         )
+
+if __name__ == "__main__":
+    import asyncio
+    import json
+    from typing import Dict
+
+    buildings: Dict[int, BuildingInfo] = asyncio.run(get_building_info())
+    for building_id, building in buildings.items():
+        print(
+            json.dumps(
+                building.model_dump(),
+                ensure_ascii=False,
+                indent=2
+            )
+        )
