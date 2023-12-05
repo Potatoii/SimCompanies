@@ -1,0 +1,18 @@
+on:
+  push:
+    branches:
+    - main
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: PyInstaller Linux
+        uses: JackMcKew/pyinstaller-action-linux@main
+        with:
+          path: .
+      - uses: actions/upload-artifact@v2
+      - name: Upload
+        with:
+          name: SimBot
+          path: ./dist/SimBot
