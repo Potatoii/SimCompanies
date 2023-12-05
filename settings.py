@@ -6,8 +6,8 @@ log_name = "SimCompanies.log"
 stdout_level = "INFO"
 file_level = "INFO"
 
-if not os.path.exists(os.path.join(root_path, "config.json")):
-    with open(os.path.join(root_path, "config.json"), "w") as file:
+if not os.path.exists("config.json"):
+    with open("config.json", "w") as file:
         file.write(json.dumps({
             "user_config": {
                 "email": "",
@@ -21,7 +21,7 @@ if not os.path.exists(os.path.join(root_path, "config.json")):
             "bark_key": ""
         }, indent=2))
 
-json_config = json.loads(open(os.path.join(root_path, "config.json"), "r", encoding="utf-8").read())
+json_config = json.loads(open("config.json", "r", encoding="utf-8").read())
 
 user_config = json_config["user_config"]
 mail_config = json_config["mail_config"]

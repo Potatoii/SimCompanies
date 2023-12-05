@@ -56,7 +56,7 @@ async def setup():
             else:
                 break
 
-        with open(f"{settings.root_path}/config.json", "w") as file:
+        with open("config.json", "w") as file:
             file.write(json.dumps({
                 "user_config": {
                     "email": email,
@@ -71,5 +71,5 @@ async def setup():
                 "bark_key": bark_key  # noqa
             }, indent=2))
         logger.info("设置完成，信息已经被保存在config.json文件中。")
-        logger.info("如需修改, 请删除config.json文件后重新运行程序。")
+        logger.info("如需修改, 可自行修改config.json文件或删除config.json文件后重新运行程序。")
         importlib.reload(settings)
