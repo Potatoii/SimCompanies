@@ -12,8 +12,11 @@ jobs:
         uses: JackMcKew/pyinstaller-action-linux@main
         with:
           path: .
-          
-      - uses: actions/upload-artifact@v2
+
+      - name: Automatic Releases
+        uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
-          name: SimBot
-          path: ./dist/SimBot
+          repo_token: ${{ secret.RELEASE_TOEKN }}
+          automatic_release_tag: "latest"
+          title: "SimBot"
+          files: ./dist/SimBot
