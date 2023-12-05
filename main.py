@@ -11,5 +11,10 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
+    import sys
 
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("退出监控")
+        sys.exit(0)

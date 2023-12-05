@@ -83,5 +83,5 @@ class SimClient:
         if auth_response.status_code != 200:
             logger.error(auth_response.text)
             raise Exception("login failed")
-        logger.info("登录成功")
+        logger.debug("登录成功")
         self.client.cookies = auth_response.cookies
