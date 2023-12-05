@@ -16,7 +16,7 @@ jobs:
       - name: Automatic Releases
         uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
-          repo_token: ${{ secret.RELEASE_TOEKN }}
+          repo_token: ${{ secret.RELEASE_TOKEN }}
           automatic_release_tag: "latest"
           title: "SimBot"
           files: ./dist/SimBot
