@@ -19,7 +19,7 @@ class Notification:
                 mail_from=settings.mail_config["username"],
                 mail_to=[settings.mail_config["username"]],
                 subject="SimCompanies",
-                content="message",
+                content=message,
             )
             await mail_notification(mail_params)
 
