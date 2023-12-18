@@ -1,11 +1,15 @@
+import ast
 import datetime
+import json
+import re
 from typing import Union
-
+import math
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+from bs4 import BeautifulSoup
 from matplotlib.font_manager import FontProperties
 
-from decorators import sim_client
+from decorators import sim_client, httpx_client
 from sim_request import SimClient
 
 
@@ -49,6 +53,8 @@ async def get_my_company(*, simclient: SimClient = None):
     response = await simclient.get(url)
     company_info = response.json()
     print(company_info)
+    temporals = company_info["temporals"]
+    print(temporals)
 
 
 @sim_client
@@ -65,23 +71,74 @@ async def get_productivity(item_id: Union[int, str], *, simclient: SimClient = N
     print(item_info)
 
 
-def count_out_hour_profit(sellprice, saturation, retail_modeling, quality, sell_bonus, building_wages, admin_rate,
-                          courc_cost):
-    time2sell_per_unit = (sellprice * retail_modeling['xMultiplier'] + (
-                retail_modeling['xOffsetBase'] + (max(-0.38, saturation - 0.24 * quality) - 0.5) / retail_modeling[
-            'marketSaturationDiv'])) ** retail_modeling['power'] * retail_modeling['yMultiplier'] + retail_modeling[
-                             'yOffset']
+def count_out_hour_profit(sellprice, retail_model, quality, sell_bonus, building_wages, admin_rate,
+                          source_cost):
+    time2sell_per_unit = (sellprice * retail_model["xMultiplier"] + (
+            retail_model["xOffsetBase"] + (max(-0.38, retail_model["marketSaturationDiv"] - 0.24 * quality) - 0.5) /
+            retail_model[
+                "marketSaturationDiv"])) ** retail_model["power"] * retail_model["yMultiplier"] + retail_model[
+                             "yOffset"]
     time2sell_per_unit = round(time2sell_per_unit, 2)
     units_sold_per_hour = 3600 / time2sell_per_unit / (1 - sell_bonus / 100)
     units_sold_per_hour = round(units_sold_per_hour, 2)
+    print(units_sold_per_hour)
     revenues_per_hour = units_sold_per_hour * sellprice
     revenues_per_hour = round(revenues_per_hour, 2)
-    cost = courc_cost * units_sold_per_hour + building_wages + (building_wages * admin_rate / 100)
+    cost = source_cost * units_sold_per_hour + building_wages + (building_wages * admin_rate / 100)
     return revenues_per_hour - cost
+
+
+def count_out_hour_profit2(sellprice, saturation, retail_modeling, quality, sell_bonus, building_wages, admin_rate,
+                           courc_cost):
+    time2sell_per_unit = math.pow(
+        sellprice * retail_modeling['xMultiplier'] +
+        (retail_modeling['xOffsetBase'] +
+         (max(-0.38, saturation - 0.24 * quality) - 0.5) / retail_modeling['marketSaturationDiv']),
+        retail_modeling['power']
+    ) * retail_modeling['yMultiplier'] + retail_modeling['yOffset']
+
+    time2sell_per_unit = round(time2sell_per_unit, 2)
+
+    units_sold_per_hour = 3600 / time2sell_per_unit / (1 - sell_bonus / 100)
+    units_sold_per_hour = round(units_sold_per_hour, 2)
+    print(units_sold_per_hour)
+    revenues_per_hour = units_sold_per_hour * sellprice
+    revenues_per_hour = round(revenues_per_hour, 2)
+
+    cost = courc_cost * units_sold_per_hour + building_wages + (building_wages * admin_rate / 100)
+
+    return revenues_per_hour - cost
+
+
+@httpx_client
+async def get_encyclopedia_item(*, client=None):
+    url = "https://www.simcompanies.com/zh/encyclopedia/0/resource/56/"
+    response = await client.get(url)
+    html_content = response.text
+    soup = BeautifulSoup(html_content, "html.parser")
+    script_tags = soup.find_all("script", {"type": "module"})
+    js_url = script_tags[0].attrs.get("src")
+    print(js_url)
+    js = await client.get(js_url)
+    r1_match = re.findall("r1=(.*?);", js.text)
+    print(r1_match[0])
+    variable_match = re.findall(f"{r1_match[0]}=(.*?);", js.text)
+    last_comma = variable_match[0].rfind(",")
+    second_last_comma = variable_match[0].rfind(",", 0, last_comma)
+    variable = variable_match[0][:second_last_comma]
+    # variable: str = variable_match[0].split(",1:")[0] + "}}"
+    variable = re.sub(r"(\w+):", r"'\1':", variable)
+    python_dict = ast.literal_eval(variable)
+    print(python_dict)
+    print(python_dict["0"]["1"]["56"])
+    retail_model = python_dict["0"]["1"]["56"]
+    price = count_out_hour_profit2(5200, 0.5, retail_model, 2, 0.7, 222.79, 11.41, 3859)
+    print(price)
 
 
 if __name__ == "__main__":
     import asyncio
 
     # asyncio.run(get_my_company())
-    asyncio.run(get_productivity(56))
+    # asyncio.run(get_productivity(56))
+    asyncio.run(get_encyclopedia_item())
