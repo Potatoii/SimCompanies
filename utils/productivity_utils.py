@@ -1,9 +1,9 @@
 import ast
 import datetime
-import json
+import math
 import re
 from typing import Union
-import math
+
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
@@ -59,7 +59,7 @@ async def get_my_company(*, simclient: SimClient = None):
 
 @sim_client
 async def get_productivity(item_id: Union[int, str], *, simclient: SimClient = None):
-    wiki_url = f"https://www.simcompanies.com/api/v4/zh/0/encyclopedia/resources/1/{item_id}/"
+    wiki_url = f"https://www.simcompanies.com/api/v4/zh/0/encyclopedia/resources/{1}/{item_id}/"
     # wiki_url = f"https://www.simcompanies.com/api/v4/zh/0/encyclopedia/resources/2/{item_id}/"
     response = await simclient.get(wiki_url)
     item_info = response.json()
@@ -71,43 +71,21 @@ async def get_productivity(item_id: Union[int, str], *, simclient: SimClient = N
     print(item_info)
 
 
-def count_out_hour_profit(sellprice, retail_model, quality, sell_bonus, building_wages, admin_rate,
-                          source_cost):
-    time2sell_per_unit = (sellprice * retail_model["xMultiplier"] + (
-            retail_model["xOffsetBase"] + (max(-0.38, retail_model["marketSaturationDiv"] - 0.24 * quality) - 0.5) /
-            retail_model[
-                "marketSaturationDiv"])) ** retail_model["power"] * retail_model["yMultiplier"] + retail_model[
-                             "yOffset"]
-    time2sell_per_unit = round(time2sell_per_unit, 2)
-    units_sold_per_hour = 3600 / time2sell_per_unit / (1 - sell_bonus / 100)
-    units_sold_per_hour = round(units_sold_per_hour, 2)
-    print(units_sold_per_hour)
-    revenues_per_hour = units_sold_per_hour * sellprice
-    revenues_per_hour = round(revenues_per_hour, 2)
-    cost = source_cost * units_sold_per_hour + building_wages + (building_wages * admin_rate / 100)
-    return revenues_per_hour - cost
+@sim_client
+async def get_executives():
+    executives_url = "https://www.simcompanies.com/api/v2/companies/me/executives/"
 
 
-def count_out_hour_profit2(sellprice, saturation, retail_modeling, quality, sell_bonus, building_wages, admin_rate,
-                           courc_cost):
-    time2sell_per_unit = math.pow(
-        sellprice * retail_modeling['xMultiplier'] +
-        (retail_modeling['xOffsetBase'] +
-         (max(-0.38, saturation - 0.24 * quality) - 0.5) / retail_modeling['marketSaturationDiv']),
-        retail_modeling['power']
-    ) * retail_modeling['yMultiplier'] + retail_modeling['yOffset']
-
-    time2sell_per_unit = round(time2sell_per_unit, 2)
-
-    units_sold_per_hour = 3600 / time2sell_per_unit / (1 - sell_bonus / 100)
-    units_sold_per_hour = round(units_sold_per_hour, 2)
-    print(units_sold_per_hour)
-    revenues_per_hour = units_sold_per_hour * sellprice
-    revenues_per_hour = round(revenues_per_hour, 2)
-
-    cost = courc_cost * units_sold_per_hour + building_wages + (building_wages * admin_rate / 100)
-
-    return revenues_per_hour - cost
+def count_out_hour_profit(sellprice, saturation, retail_modeling, quality, sellBonus, building_wages, adminRate, courcCost):
+    time2sellPerUnit = math.pow(sellprice * retail_modeling['xMultiplier'] + (retail_modeling['xOffsetBase'] + (max(-.38, saturation - .24 * quality) - .5) / retail_modeling['marketSaturationDiv']), retail_modeling['power']) * retail_modeling['yMultiplier'] + retail_modeling['yOffset']
+    time2sellPerUnit = round(time2sellPerUnit, 2)
+    unitsSoldPerHour = 3600 / time2sellPerUnit / (1 - sellBonus / 100)
+    unitsSoldPerHour = round(unitsSoldPerHour, 2)
+    print(unitsSoldPerHour)
+    revenuesPerHour = unitsSoldPerHour * sellprice
+    revenuesPerHour = round(revenuesPerHour, 2)
+    cost = courcCost * unitsSoldPerHour + building_wages + (building_wages * adminRate / 100)
+    return revenuesPerHour - cost
 
 
 @httpx_client
@@ -130,15 +108,15 @@ async def get_encyclopedia_item(*, client=None):
     variable = re.sub(r"(\w+):", r"'\1':", variable)
     python_dict = ast.literal_eval(variable)
     print(python_dict)
-    print(python_dict["0"]["1"]["56"])
+    print(python_dict["0"]["1"]["56"])  # realmId, economyState, resourceDetails
     retail_model = python_dict["0"]["1"]["56"]
-    price = count_out_hour_profit2(5200, 0.5, retail_model, 2, 0.7, 222.79, 11.41, 3859)
+    price = count_out_hour_profit(5200, 1.1960499259160826, retail_model, 2, 7, 222.79, 11.41, 3859)
     print(price)
 
 
 if __name__ == "__main__":
     import asyncio
 
-    # asyncio.run(get_my_company())
+    asyncio.run(get_my_company())
     # asyncio.run(get_productivity(56))
-    asyncio.run(get_encyclopedia_item())
+    # asyncio.run(get_encyclopedia_item())
