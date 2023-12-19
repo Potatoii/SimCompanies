@@ -72,8 +72,12 @@ async def get_productivity(item_id: Union[int, str], *, simclient: SimClient = N
 
 
 @sim_client
-async def get_executives():
+async def get_executives(*, simclient: SimClient = None):
     executives_url = "https://www.simcompanies.com/api/v2/companies/me/executives/"
+    response = await simclient.get(executives_url)
+    executives_info = response.json()
+    # 去掉候选人isCandidate
+    print(executives_info)
 
 
 def count_out_hour_profit(sellprice, saturation, retail_modeling, quality, sellBonus, building_wages, adminRate, courcCost):
@@ -98,7 +102,7 @@ async def get_encyclopedia_item(*, client=None):
     js_url = script_tags[0].attrs.get("src")
     print(js_url)
     js = await client.get(js_url)
-    r1_match = re.findall("r1=(.*?);", js.text)
+    r1_match = re.findall("r1=(.*?);", js.text)  # 这个r1不太能用
     print(r1_match[0])
     variable_match = re.findall(f"{r1_match[0]}=(.*?);", js.text)
     last_comma = variable_match[0].rfind(",")
@@ -117,6 +121,6 @@ async def get_encyclopedia_item(*, client=None):
 if __name__ == "__main__":
     import asyncio
 
-    asyncio.run(get_my_company())
+    asyncio.run(get_executives())
     # asyncio.run(get_productivity(56))
     # asyncio.run(get_encyclopedia_item())
