@@ -80,8 +80,12 @@ async def get_executives(*, simclient: SimClient = None):
     print(executives_info)
 
 
-def count_out_hour_profit(sellprice, saturation, retail_modeling, quality, sellBonus, building_wages, adminRate, courcCost):
-    time2sellPerUnit = math.pow(sellprice * retail_modeling['xMultiplier'] + (retail_modeling['xOffsetBase'] + (max(-.38, saturation - .24 * quality) - .5) / retail_modeling['marketSaturationDiv']), retail_modeling['power']) * retail_modeling['yMultiplier'] + retail_modeling['yOffset']
+def hour_profit(sellprice, saturation, retail_modeling, quality, sellBonus, building_wages, adminRate,
+                courcCost):
+    time2sellPerUnit = math.pow(sellprice * retail_modeling['xMultiplier'] + (
+            retail_modeling['xOffsetBase'] + (max(-.38, saturation - .24 * quality) - .5) / retail_modeling[
+        'marketSaturationDiv']), retail_modeling['power']) * retail_modeling['yMultiplier'] + retail_modeling[
+                           'yOffset']
     time2sellPerUnit = round(time2sellPerUnit, 2)
     unitsSoldPerHour = 3600 / time2sellPerUnit / (1 - sellBonus / 100)
     unitsSoldPerHour = round(unitsSoldPerHour, 2)
@@ -92,35 +96,76 @@ def count_out_hour_profit(sellprice, saturation, retail_modeling, quality, sellB
     return revenuesPerHour - cost
 
 
+def vz(executives, sales_modifier, price, quality, market_saturation, acceleration, building_size):
+    p = (math.pow(price * executives["xMultiplier"] + (
+            executives["xOffsetBase"] + (
+                max(market_saturation - 0.3 if market_saturation < 0.3 else market_saturation - quality * 0.24,
+                    0.1 - 0.24 * 2) - 0.5) / executives[
+                "marketSaturationDiv"]), executives["power"]) * executives[
+             "yMultiplier"] + executives["yOffset"]) * 100 / acceleration / building_size
+    return 100 * 3600 / (p - p * sales_modifier / 100)
+
+
+def executive_filter(executives: list):
+    # 员工筛选
+    now_timestamp = datetime.datetime.now().timestamp() * 1000
+    candidate_list = [o["id"] for o in [executive for executive in executives if
+                                        executive["position"][0] == "c" and now_timestamp - datetime.datetime.timestamp(
+                                            datetime.datetime.fromisoformat(
+                                                executive["start"])) * 1000 < 60 * 60 * 3 * 1e3 and not executive[
+                                            "positionAccelerated"] and not executive[
+                                            "isCandidate"]]]
+    training_list = [o["id"] for o in [executive for executive in executives if
+                                       executive["currentTraining"] and not executive["currentTraining"][
+                                           "accelerated"] and datetime.datetime.timestamp(
+                                           datetime.datetime.fromisoformat(
+                                               executive["currentTraining"][
+                                                   "datetime"])) > now_timestamp - 60 * 60 * 27 * 1e3]]
+    strike_list = [o["id"] for o in
+                   [executive for executive in executives if executive["strikeUntil"] and datetime.datetime.timestamp(
+                       datetime.datetime.fromisoformat(executive["strikeUntil"])) > now_timestamp]]
+    return [o for o in executives if
+            o["id"] not in candidate_list and o["id"] not in strike_list and o["id"] not in training_list]
+
+
+def merge_sales_modifier(sales_modifier, api_executives, recreation_bonus):  # 技能点的销售加成, 高管接口返回值, 加速倍数
+    i = executive_filter(api_executives) if api_executives else []
+    n = math.floor(
+        sum([r["skills"]["cmo"] if r["position"] == "cmo" else r["skills"]["cmo"] / 4 if r["position"][0] == "c" else 0
+             for r in
+             i]))
+    return (sales_modifier or 0) + math.floor(n / 3) + recreation_bonus
+
+
 @httpx_client
-async def get_encyclopedia_item(*, client=None):
-    url = "https://www.simcompanies.com/zh/encyclopedia/0/resource/56/"
-    response = await client.get(url)
+async def get_encyclopedia_item(
+        item_id: Union[int, str],
+        realm_id: Union[int, str],
+        economy_state: Union[int, str],
+        *,
+        client=None
+):
+    resource_url = f"https://www.simcompanies.com/zh/encyclopedia/0/resource/{item_id}/"
+    response = await client.get(resource_url)
     html_content = response.text
     soup = BeautifulSoup(html_content, "html.parser")
+    # 获取js
     script_tags = soup.find_all("script", {"type": "module"})
     js_url = script_tags[0].attrs.get("src")
-    print(js_url)
     js = await client.get(js_url)
-    r1_match = re.findall("r1=(.*?);", js.text)  # 这个r1不太能用
-    print(r1_match[0])
-    variable_match = re.findall(f"{r1_match[0]}=(.*?);", js.text)
-    last_comma = variable_match[0].rfind(",")
-    second_last_comma = variable_match[0].rfind(",", 0, last_comma)
-    variable = variable_match[0][:second_last_comma]
-    # variable: str = variable_match[0].split(",1:")[0] + "}}"
-    variable = re.sub(r"(\w+):", r"'\1':", variable)
-    python_dict = ast.literal_eval(variable)
-    print(python_dict)
-    print(python_dict["0"]["1"]["56"])  # realmId, economyState, resourceDetails
-    retail_model = python_dict["0"]["1"]["56"]
-    price = count_out_hour_profit(5200, 1.1960499259160826, retail_model, 2, 7, 222.79, 11.41, 3859)
-    print(price)
+    # 正则匹配取出retail_model
+    pattern = re.compile(r"\{(\d+):{(\d+):(.*?)}}}}")
+    match = pattern.search(js.text)
+    retail_model = match.group(0)
+    retail_model = re.sub(r"(\w+):", r"'\1':", retail_model)
+    retail_model = ast.literal_eval(retail_model)
+    retail_model = retail_model[str(realm_id)][str(economy_state)][str(item_id)]
 
 
 if __name__ == "__main__":
     import asyncio
 
-    asyncio.run(get_executives())
+    # asyncio.run(get_my_company())
+    # asyncio.run(get_executives())
     # asyncio.run(get_productivity(56))
-    # asyncio.run(get_encyclopedia_item())
+    asyncio.run(get_encyclopedia_item(56, 0, 1))
