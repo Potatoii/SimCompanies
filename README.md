@@ -20,6 +20,8 @@ SimBot是一个Python的simcompanies建筑物监控, 每分钟检查一下你的
 
 ## 开始
 
+### 运行
+
 1. 安装并切换到python虚拟环境(virtualenv | conda | etc.)
 2. 安装项目依赖
 
@@ -48,6 +50,14 @@ SimBot是一个Python的simcompanies建筑物监控, 每分钟检查一下你的
      },
      "bark_key": ""
    }
+   ```
+
+### Docker
+
+1. 在项目目录中创建一个`config.json`文件, 填写内容(邮件通知和Bark通知至少填一个)
+
+2. ```bash
+   docker-compose up -d
    ```
 
 ## 通知方式
