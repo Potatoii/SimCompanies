@@ -1,4 +1,5 @@
 import asyncio
+import random
 from typing import Dict
 
 from log_utils import logger
@@ -26,7 +27,8 @@ async def building_status_monitor():
                 elif is_idle:
                     logger.info(f"{building_name}已恢复工作")
                     idle_building_set.remove(building_id)
-            await asyncio.sleep(60)
+            sleep_time = random.randint(300, 360)
+            await asyncio.sleep(sleep_time)
 
 
 if __name__ == "__main__":
