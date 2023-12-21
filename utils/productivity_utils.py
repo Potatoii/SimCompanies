@@ -2,15 +2,52 @@ import ast
 import datetime
 import math
 import re
-from typing import Union
+from typing import Union, Any, Dict, Optional, List
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 from matplotlib.font_manager import FontProperties
+from pydantic import BaseModel
 
 from decorators import sim_client, httpx_client
 from sim_request import SimClient
+
+
+class Employer(BaseModel):
+    id: int
+    company: str
+    logo: str
+    realmId: int
+
+
+class CurrentTraining(BaseModel):
+    id: int
+    datetime: str
+    type: str
+    description: str
+    covered: bool
+    employer: Employer
+    accelerated: bool
+
+
+class Executive(BaseModel):
+    id: int
+    name: str
+    age: int
+    gender: str
+    genome: str
+    currentEmployer: int
+    isCandidate: bool
+    created: str
+    accelerated: bool
+    salary: int
+    strikeUntil: Any  # 没碰到过罢工不知道长啥样
+    skills: Dict[str, int]
+    position: str
+    start: str
+    positionAccelerated: bool
+    currentTraining: Optional[CurrentTraining]
 
 
 def draw_production_relations_chart(retail_info_list: list):
@@ -72,12 +109,16 @@ async def get_productivity(item_id: Union[int, str], *, simclient: SimClient = N
 
 
 @sim_client
-async def get_executives(*, simclient: SimClient = None):
+async def get_executives(*, simclient: SimClient = None) -> List[Executive]:
+    """
+    获取高管信息
+    :param simclient:
+    :return:
+    """
     executives_url = "https://www.simcompanies.com/api/v2/companies/me/executives/"
     response = await simclient.get(executives_url)
-    executives_info = response.json()
-    # 去掉候选人isCandidate
-    print(executives_info)
+    executives = response.json()
+    return executives
 
 
 def hour_profit(sellprice, saturation, retail_modeling, quality, sellBonus, building_wages, adminRate,
@@ -96,17 +137,17 @@ def hour_profit(sellprice, saturation, retail_modeling, quality, sellBonus, buil
     return revenuesPerHour - cost
 
 
-def vz(executives, sales_modifier, price, quality, market_saturation, acceleration, building_size):
+def sell_per_hour(executives: Executive, sales_modifier, price, quality, market_saturation, acceleration, building_size):
     p = (math.pow(price * executives["xMultiplier"] + (
             executives["xOffsetBase"] + (
-                max(market_saturation - 0.3 if market_saturation < 0.3 else market_saturation - quality * 0.24,
-                    0.1 - 0.24 * 2) - 0.5) / executives[
+            max(market_saturation - 0.3 if market_saturation < 0.3 else market_saturation - quality * 0.24,
+                0.1 - 0.24 * 2) - 0.5) / executives[
                 "marketSaturationDiv"]), executives["power"]) * executives[
              "yMultiplier"] + executives["yOffset"]) * 100 / acceleration / building_size
     return 100 * 3600 / (p - p * sales_modifier / 100)
 
 
-def executive_filter(executives: list):
+def executive_filter(executives: List[Executive]) -> List[Executive]:
     # 员工筛选
     now_timestamp = datetime.datetime.now().timestamp() * 1000
     candidate_list = [o["id"] for o in [executive for executive in executives if
@@ -128,8 +169,15 @@ def executive_filter(executives: list):
             o["id"] not in candidate_list and o["id"] not in strike_list and o["id"] not in training_list]
 
 
-def merge_sales_modifier(sales_modifier, api_executives, recreation_bonus):  # 技能点的销售加成, 高管接口返回值, 加速倍数
-    i = executive_filter(api_executives) if api_executives else []
+def merge_sales_modifier(sales_modifier, executives, recreation_bonus):
+    """
+    合并销售加成
+    :param sales_modifier: 技能点的销售加成
+    :param executives: 高管
+    :param recreation_bonus: 加速倍数(例如新人奖励的3倍)
+    :return:
+    """
+    i = executives if executives else []
     n = math.floor(
         sum([r["skills"]["cmo"] if r["position"] == "cmo" else r["skills"]["cmo"] / 4 if r["position"][0] == "c" else 0
              for r in
@@ -138,13 +186,17 @@ def merge_sales_modifier(sales_modifier, api_executives, recreation_bonus):  # �
 
 
 @httpx_client
+@sim_client
 async def get_encyclopedia_item(
         item_id: Union[int, str],
         realm_id: Union[int, str],
         economy_state: Union[int, str],
         *,
-        client=None
+        client=None,
+        simclient=None
 ):
+    executives = await get_executives(simclient=simclient)
+    executives = executive_filter(executives)
     resource_url = f"https://www.simcompanies.com/zh/encyclopedia/0/resource/{item_id}/"
     response = await client.get(resource_url)
     html_content = response.text
@@ -160,12 +212,13 @@ async def get_encyclopedia_item(
     retail_model = re.sub(r"(\w+):", r"'\1':", retail_model)
     retail_model = ast.literal_eval(retail_model)
     retail_model = retail_model[str(realm_id)][str(economy_state)][str(item_id)]
+    sell_speed = sell_per_hour(executives)
 
 
 if __name__ == "__main__":
     import asyncio
 
-    # asyncio.run(get_my_company())
-    # asyncio.run(get_executives())
+    asyncio.run(get_my_company())
+    # print(asyncio.run(get_executives()))
     # asyncio.run(get_productivity(56))
-    asyncio.run(get_encyclopedia_item(56, 0, 1))
+    # asyncio.run(get_encyclopedia_item(56, 0, 1))
