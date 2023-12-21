@@ -2,7 +2,7 @@ import json
 import os.path
 
 root_path = os.path.dirname(os.path.abspath(__file__))
-log_name = "SimCompanies.log"
+log_name = "simbot.log"
 stdout_level = "INFO"
 file_level = "INFO"
 

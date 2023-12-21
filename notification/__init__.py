@@ -18,7 +18,7 @@ class Notification:
             mail_params = MailSchema(
                 mail_from=settings.mail_config["username"],
                 mail_to=[settings.mail_config["username"]],
-                subject="SimCompanies",
+                subject="SimBot",
                 content=message,
             )
             await mail_notification(mail_params)

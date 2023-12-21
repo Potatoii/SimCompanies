@@ -14,7 +14,10 @@ def mkdir(path: str) -> bool:
 
 class Logger:
     def __init__(self, log_name: str = settings.log_name):
-        log_file_path = log_name
+        root_path = settings.root_path
+        log_path = os.path.join(root_path, "logs")
+        mkdir(log_path)
+        log_file_path = os.path.join(log_path, log_name)
         self._logger = logging
         self._logger.remove()
         self._add_stdout_logger()
