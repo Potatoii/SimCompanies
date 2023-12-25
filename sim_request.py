@@ -27,7 +27,7 @@ class SimClient:
             "X-Tz-Offset": "-480"
         }
         self.cookies: Cookies = Cookies()
-        self.client: AsyncClient = httpx.AsyncClient(timeout=60)
+        self.client: AsyncClient = httpx.AsyncClient(headers=self.headers, timeout=60)
 
     async def __aenter__(self):
         self.client = httpx.AsyncClient()

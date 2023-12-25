@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Capabilities(BaseModel):
@@ -49,7 +49,7 @@ class AuthUser(BaseModel):
 
 class AuthCompany(BaseModel):
     companyId: int
-    company: str
+    company: str = Field(description="公司名")
     moderatorSign: bool
     hqImage: str
     money: int
