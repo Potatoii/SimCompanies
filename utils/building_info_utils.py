@@ -80,14 +80,10 @@ def add_busy_info(building_dict: dict, business_info: dict) -> dict:
     if sales_order:
         building_dict = add_sales_info(building_dict, sales_order)
         business_info.pop("sales_order")
-    else:
-        sales_order = None
     resource = business_info.get("resource")
     if resource:
         building_dict = add_resource_info(building_dict, resource)
         business_info.pop("resource")
-    else:
-        resource = None
     building_dict["busy"] = BusinessInfo(
         start=datetime.fromtimestamp(business_start).strftime("%Y-%m-%d %H:%M:%S"),
         end=datetime.fromtimestamp(business_end).strftime("%Y-%m-%d %H:%M:%S"),
