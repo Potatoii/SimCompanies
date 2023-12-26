@@ -1,10 +1,9 @@
 version: "3"
 services:
   simbot:
-    build: .
     container_name: simbot
+    image: ghcr.io/potatoii/simbot:main
     working_dir: /simbot
-    hostname: simbot
     restart: always
     volumes:
       - ./config.json:/simbot/config.json
