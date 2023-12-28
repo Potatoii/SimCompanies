@@ -1,13 +1,15 @@
 import ast
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 from typing import List
 
+import httpx
 from bs4 import BeautifulSoup
 
-from decorators import sim_client
+from decorators import sim_client, httpx_client
 from schemas import Executive
-from schemas.item import Item
+from schemas.encyclopedia import EncyclopediaItem
+from schemas.market import MarketItem
 from schemas.me import Company
 from schemas.retail import RetailModel
 from schemas.user import User
@@ -119,7 +121,13 @@ async def get_user_company(user_name: str, realm_id: int = 1, *, simclient: SimC
 
 
 @sim_client
-async def get_item_info(realm_id: int, economy_state: int, item_id: int, *, simclient: SimClient = None) -> Item:
+async def get_item_info(
+        realm_id: int,
+        economy_state: int,
+        item_id: int,
+        *,
+        simclient: SimClient = None
+) -> EncyclopediaItem:
     """
     获取物品信息
     :param realm_id: 领域(商业大亨|企业家)
@@ -129,13 +137,46 @@ async def get_item_info(realm_id: int, economy_state: int, item_id: int, *, simc
     :return: 物品信息
     """
     wiki_url = f"https://www.simcompanies.com/api/v4/zh/{realm_id}/encyclopedia/resources/{economy_state}/{item_id}/"
-    response = await simclient.get(wiki_url)
+    response = await simclient.client.get(wiki_url)
     item_info = response.json()
-    item = Item(**item_info)
+    item = EncyclopediaItem(**item_info)
     return item
+
+
+@httpx_client
+async def get_market_overview(realm_id: int, *, client: httpx.AsyncClient = None) -> List:
+    """
+    获取交易行价格概览
+    :param realm_id: 领域(商业大亨|企业家)
+    :param client: httpx.AsyncClient
+    :return: 交易行价格概览
+    """
+    previous_day = datetime.utcnow() - timedelta(days=1)
+    iso_format_str = previous_day.isoformat()
+    iso_format_str = iso_format_str[:-3] + "Z"
+    market_url = f"https://www.simcompanies.com/api/v2/market-ticker/{realm_id}/{iso_format_str}/"
+    response = await client.get(market_url)
+    market_info = response.json()
+    return market_info
+
+
+@httpx_client
+async def get_market_price(realm_id: int, item_id: int, *, client: httpx.AsyncClient = None) -> List[MarketItem]:
+    """
+    获取交易行价格
+    :param realm_id: 领域(商业大亨|企业家)
+    :param item_id: 物品id
+    :param client: httpx.AsyncClient
+    :return: 交易行价格
+    """
+    item_url = f"https://www.simcompanies.com/api/v3/market/{realm_id}/{item_id}/"
+    response = await client.get(item_url)
+    item_list = response.json()
+    item_list = [MarketItem(**item) for item in item_list]
+    return item_list
 
 
 if __name__ == "__main__":
     import asyncio
 
-    print(asyncio.run(get_my_company()))
+    print(asyncio.run(get_market_price(0, 56)))

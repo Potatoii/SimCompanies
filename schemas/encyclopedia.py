@@ -26,7 +26,7 @@ class RetailData(BaseModel):
     label: str
 
 
-class Item(BaseModel):
+class EncyclopediaItem(BaseModel):
     name: str
     image: str
     db_letter: int

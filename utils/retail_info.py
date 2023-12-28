@@ -93,7 +93,7 @@ class RetailInfo:
         user_info = await get_user_company(my_company.authCompany.company, realm_id=self.realm_id, simclient=simclient)
         recreation_bonus = user_info.company.recreationBonus
         sales_modifier = self.merge_sales_modifier(my_company.authCompany.salesModifier, executives, recreation_bonus)
-        item = await get_item_info(self.realm_id, self.economy_state, self.item_id, simclient=simclient)
+        item = await get_item_info(self.realm_id, self.economy_state, self.item_id)
         market_saturation = item.marketSaturation
         return self.calculate(
             retail_model,
