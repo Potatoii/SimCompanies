@@ -10,7 +10,7 @@ async def bark_notification(message: str, *, client: httpx.AsyncClient = None):
     """
     bark通知
     """
-    url = f"https://api.day.app/{settings.bark_key}/SimCompanies/{message}"
+    url = f"https://api.day.app/{settings.notice_config.bark.bark_key}/SimCompanies/{message}"
     try:
         response = await client.get(url)
         if response.status_code == 200:

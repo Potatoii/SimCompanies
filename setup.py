@@ -1,5 +1,5 @@
 import importlib
-import json
+import toml
 
 import settings
 from log_utils import logger
@@ -7,7 +7,7 @@ from notification.mail import MailServerSchema, MailSchema, mail_notification
 
 
 async def setup():
-    if not settings.user_config["email"]:
+    if not settings.user_config.email:
         email = input("请输入您的Simcompanies账号: ")
         password = input("请输入您的Simcompanies密码: ")
         while True:
@@ -44,7 +44,7 @@ async def setup():
                     continue
             else:
                 mail_host = ""
-                mail_port = ""
+                mail_port = 465
                 mail_username = ""
                 mail_password = ""
             if input("是否使用bark通知? 输入'y'表示是，其他输入表示否: ").lower() == "y":
@@ -56,20 +56,24 @@ async def setup():
             else:
                 break
 
-        with open("config.json", "w") as file:
-            file.write(json.dumps({
-                "user_config": {
+        with open("config.local.toml", "w") as file:
+            toml.dump({
+                "user": {
                     "email": email,
                     "password": password
                 },
-                "mail_config": {
-                    "host": mail_host,
-                    "port": int(mail_port) if mail_port else "",
-                    "username": mail_username,
-                    "password": mail_password
-                },
-                "bark_key": bark_key  # noqa
-            }, indent=2))
-        logger.info("设置完成，信息已经被保存在config.json文件中。")
-        logger.info("如需修改, 可自行修改config.json文件或删除config.json文件后重新运行程序。")
+                "notice": {
+                    "mail": {
+                        "host": mail_host,
+                        "port": int(mail_port) if mail_port else 465,
+                        "username": mail_username,
+                        "password": mail_password
+                    },
+                    "bark": {
+                        "bark_key": bark_key  # noqa
+                    }
+                }
+            }, file)
+        logger.info("设置完成，信息已经被保存在config.local.toml文件中。")
+        logger.info("如需修改, 可自行修改config.local.toml文件或删除config.local.toml文件后重新运行程序。")
         importlib.reload(settings)

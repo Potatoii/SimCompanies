@@ -5,8 +5,8 @@ from notification.mail import mail_notification, MailSchema
 
 class Notification:
     def __init__(self):
-        self.bark_status = True if settings.bark_key else False
-        self.mail_status = True if settings.mail_config["username"] else False
+        self.bark_status = True if settings.notice_config.bark.bark_key else False
+        self.mail_status = True if settings.notice_config.mail.username else False
 
     async def notify(self, message: str):
         """
@@ -16,8 +16,8 @@ class Notification:
             await bark_notification(message)
         if self.mail_status:
             mail_params = MailSchema(
-                mail_from=settings.mail_config["username"],
-                mail_to=[settings.mail_config["username"]],
+                mail_from=settings.notice_config.mail.username,
+                mail_to=[settings.notice_config.mail.username],
                 subject="SimBot",
                 content=message,
             )

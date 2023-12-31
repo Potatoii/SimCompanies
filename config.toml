@@ -1,0 +1,16 @@
+[log]
+log_name = "simbot.log"
+stdout_level = "INFO"
+file_level = "INFO"
+
+[user]
+email = ""
+password = ""
+
+[notice.mail]
+host = "smtp.qq.com"
+port = 465
+username = ""
+password = ""
+[notice.bark]
+bark_key = ""

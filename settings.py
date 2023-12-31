@@ -1,28 +1,63 @@
-import json
 import os.path
+from typing import Optional
+
+from pydantic_settings import BaseSettings
 
 root_path = os.path.dirname(os.path.abspath(__file__))
-log_name = "simbot.log"
-stdout_level = "INFO"
-file_level = "INFO"
 
-if not os.path.exists("config.json"):
-    with open("config.json", "w") as file:
-        file.write(json.dumps({
-            "user_config": {
-                "email": "",
-                "password": ""},
-            "mail_config": {
-                "host": "",
-                "port": "",
-                "username": "",
-                "password": ""
-            },
-            "bark_key": ""
-        }, indent=2))
 
-json_config = json.loads(open("config.json", "r", encoding="utf-8").read())
+class LogSettings(BaseSettings):
+    log_name: str = "simbot.log"
+    stdout_level: str = "INFO"
+    file_level: str = "INFO"
 
-user_config = json_config["user_config"]
-mail_config = json_config["mail_config"]
-bark_key = json_config["bark_key"]
+    class Config:
+        env_file = "config.toml", "config.local.toml"
+        extra = "ignore"
+
+
+class UserSettings(BaseSettings):
+    email: str
+    password: str
+
+    class Config:
+        env_file = "config.toml", "config.local.toml"
+        extra = "ignore"
+
+
+class MailSettings(BaseSettings):
+    host: Optional[str]
+    port: Optional[int]
+    username: Optional[str]
+    password: Optional[str]
+
+    class Config:
+        env_file = "config.toml", "config.local.toml"
+        extra = "ignore"
+
+
+class BarkSettings(BaseSettings):
+    bark_key: Optional[str]
+
+    class Config:
+        env_file = "config.toml", "config.local.toml"
+        extra = "ignore"
+
+
+class NoticeSettings(BaseSettings):
+    mail: MailSettings = MailSettings()
+    bark: BarkSettings = BarkSettings()
+
+    class Config:
+        env_file = "config.toml", "config.local.toml"
+        extra = "ignore"
+
+
+log_config = LogSettings()
+user_config = UserSettings()
+notice_config = NoticeSettings()
+
+if __name__ == "__main__":
+    print(log_config)
+    print(user_config)
+    print(notice_config)

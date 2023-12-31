@@ -13,7 +13,7 @@ def mkdir(path: str) -> bool:
 
 
 class Logger:
-    def __init__(self, log_name: str = settings.log_name):
+    def __init__(self, log_name: str = settings.log_config.log_name):
         root_path = settings.root_path
         log_path = os.path.join(root_path, "logs")
         mkdir(log_path)
@@ -26,7 +26,7 @@ class Logger:
     def _add_stdout_logger(self):
         self._logger.add(
             sys.stdout,
-            level=settings.stdout_level,
+            level=settings.log_config.stdout_level,
             format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
                    "<level>{level:8}</level> | "
                    "<magenta>{module}.{function}:{line}</magenta> - "
@@ -38,7 +38,7 @@ class Logger:
     def _add_file_logger(self, log_file_path):
         self._logger.add(
             log_file_path,
-            level=settings.file_level,
+            level=settings.log_config.file_level,
             format="{time:YYYY-MM-DD HH:mm:ss} | "
                    "{level:8} | "
                    "{module}.{function}:{line} - "
