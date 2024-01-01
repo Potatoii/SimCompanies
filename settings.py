@@ -1,63 +1,40 @@
 import os.path
 from typing import Optional
 
-from pydantic_settings import BaseSettings
+from pydantic import Field
+
+from toml_settings import TomlSettings
 
 root_path = os.path.dirname(os.path.abspath(__file__))
 
 
-class LogSettings(BaseSettings):
+class LogSettings(TomlSettings):
     log_name: str = "simbot.log"
     stdout_level: str = "INFO"
     file_level: str = "INFO"
 
-    class Config:
-        env_file = "config.toml", "config.local.toml"
-        extra = "ignore"
 
-
-class UserSettings(BaseSettings):
+class UserSettings(TomlSettings):
     email: str
     password: str
 
-    class Config:
-        env_file = "config.toml", "config.local.toml"
-        extra = "ignore"
+
+class MailSettings(TomlSettings):
+    host: Optional[str] = Field(required=False, default="smtp.qq.com")
+    port: Optional[int] = Field(required=False, default=465)
+    username: Optional[str] = Field(required=False, default="")
+    password: Optional[str] = Field(required=False, default="")
 
 
-class MailSettings(BaseSettings):
-    host: Optional[str]
-    port: Optional[int]
-    username: Optional[str]
-    password: Optional[str]
-
-    class Config:
-        env_file = "config.toml", "config.local.toml"
-        extra = "ignore"
-
-
-class BarkSettings(BaseSettings):
+class BarkSettings(TomlSettings):
     bark_key: Optional[str]
 
-    class Config:
-        env_file = "config.toml", "config.local.toml"
-        extra = "ignore"
 
-
-class NoticeSettings(BaseSettings):
+class NoticeSettings(TomlSettings):
     mail: MailSettings = MailSettings()
     bark: BarkSettings = BarkSettings()
-
-    class Config:
-        env_file = "config.toml", "config.local.toml"
-        extra = "ignore"
 
 
 log_config = LogSettings()
 user_config = UserSettings()
 notice_config = NoticeSettings()
-
-if __name__ == "__main__":
-    print(log_config)
-    print(user_config)
-    print(notice_config)
