@@ -27,7 +27,7 @@ class MailSettings(TomlSettings):
 
 
 class BarkSettings(TomlSettings):
-    bark_key: Optional[str]
+    bark_key: Optional[str] = Field(required=False, default="")
 
 
 class NoticeSettings(TomlSettings):
