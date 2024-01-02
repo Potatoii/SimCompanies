@@ -16,11 +16,10 @@ class TomlSettings(BaseSettings):
         extra="ignore"
     )
 
-    def __init__(self, env_file: str = None):
+    def __init__(self, env_file: str = None, **values: Any):
+        super().__init__(**values)
         if env_file:
             self.model_config["env_file"] = env_file
-
-        super().__init__()
 
     @classmethod
     def settings_customise_sources(
