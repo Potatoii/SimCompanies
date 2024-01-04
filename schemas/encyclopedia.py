@@ -1,4 +1,5 @@
 from typing import List, Optional
+
 from pydantic import BaseModel
 
 
@@ -15,7 +16,18 @@ class Resource(BaseModel):
 
 class ProducedFrom(BaseModel):
     resource: Resource
-    amount: int
+    amount: float
+
+
+class NeededFor(BaseModel):
+    name: str
+    image: str
+    db_letter: int
+    transportation: float
+    retailable: bool
+    research: bool
+    exchangeTradable: bool
+    realmAvailable: bool
 
 
 class RetailData(BaseModel):
@@ -24,6 +36,17 @@ class RetailData(BaseModel):
     demand: float
     date: str
     label: str
+
+
+class ImprovesQualityOf(BaseModel):
+    name: str
+    image: str
+    db_letter: int
+    transportation: float
+    retailable: bool
+    research: bool
+    exchangeTradable: bool
+    realmAvailable: bool
 
 
 class EncyclopediaItem(BaseModel):
@@ -36,16 +59,16 @@ class EncyclopediaItem(BaseModel):
     exchangeTradable: bool
     realmAvailable: bool
     producedFrom: List[ProducedFrom]
-    soldAt: str
+    soldAt: Optional[str]
     soldAtRestaurant: Optional[str]
     producedAt: str
-    neededFor: List
+    neededFor: List[NeededFor]
     transportNeeded: float
     producedAnHour: float
     baseSalary: float
-    averageRetailPrice: float
-    marketSaturation: float
-    marketSaturationLabel: str
-    storeBaseSalary: float
+    averageRetailPrice: Optional[float]
+    marketSaturation: Optional[float]
+    marketSaturationLabel: Optional[str]
+    storeBaseSalary: Optional[float]
     retailData: List[RetailData]
-    improvesQualityOf: List
+    improvesQualityOf: List[ImprovesQualityOf]

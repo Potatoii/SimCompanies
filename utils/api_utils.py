@@ -26,8 +26,8 @@ async def get_retail_model(
 ) -> RetailModel:
     """
     获取零售模型
-    :param realm_id: 领域(商业大亨|企业家)
-    :param economy_state: 经济状态(0:景气|1:平缓|2:萧条)
+    :param realm_id: 领域(0:商业大亨|1:企业家)
+    :param economy_state: 经济状态(0:萧条|1:平缓|2:景气)
     :param item_id: 物品id
     :param simclient: SimClient
     :return: 零售模型
@@ -109,7 +109,7 @@ async def get_user_company(user_name: str, realm_id: int = 1, *, simclient: SimC
     """
     获取指定公司信息
     :param user_name: 公司名
-    :param realm_id: 领域(商业大亨|企业家)
+    :param realm_id: 领域(0:商业大亨|1:企业家)
     :param simclient: SimClient
     :return: 公司信息
     """
@@ -130,8 +130,8 @@ async def get_item_info(
 ) -> EncyclopediaItem:
     """
     获取物品信息
-    :param realm_id: 领域(商业大亨|企业家)
-    :param economy_state: 经济状态(0|1:平缓|2)
+    :param realm_id: 领域(0:商业大亨|1:企业家)
+    :param economy_state: 经济状态(0:萧条|1:平缓|2:景气)
     :param item_id: 物品id
     :param simclient: SimClient
     :return: 物品信息
@@ -147,7 +147,7 @@ async def get_item_info(
 async def get_market_overview(realm_id: int, *, client: httpx.AsyncClient = None) -> List:
     """
     获取交易行价格概览
-    :param realm_id: 领域(商业大亨|企业家)
+    :param realm_id: 领域(0:商业大亨|1:企业家)
     :param client: httpx.AsyncClient
     :return: 交易行价格概览
     """
@@ -164,7 +164,7 @@ async def get_market_overview(realm_id: int, *, client: httpx.AsyncClient = None
 async def get_market_price(realm_id: int, item_id: int, *, client: httpx.AsyncClient = None) -> List[MarketItem]:
     """
     获取交易行价格
-    :param realm_id: 领域(商业大亨|企业家)
+    :param realm_id: 领域(0:商业大亨|1:企业家)
     :param item_id: 物品id
     :param client: httpx.AsyncClient
     :return: 交易行价格
@@ -179,4 +179,5 @@ async def get_market_price(realm_id: int, item_id: int, *, client: httpx.AsyncCl
 if __name__ == "__main__":
     import asyncio
 
-    print(asyncio.run(get_market_price(0, 56)))
+    print(asyncio.run(get_item_info(0, 0, 47)))
+    # print(asyncio.run(get_my_company()))
