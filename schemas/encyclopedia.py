@@ -31,11 +31,14 @@ class NeededFor(BaseModel):
 
 
 class RetailData(BaseModel):
-    averagePrice: float
-    amountSoldRestaurant: int
-    demand: float
-    date: str
-    label: str
+    """
+    零售数据(不一定有)
+    """
+    averagePrice: Optional[float] = None
+    amountSoldRestaurant: Optional[int] = None
+    demand: Optional[float] = None
+    date: Optional[str] = None
+    label: Optional[str] = None
 
 
 class ImprovesQualityOf(BaseModel):
