@@ -100,6 +100,7 @@ def process_building_info(building_info: dict) -> BuildingInfo:
     building_dict["status"] = "idle"
     if building_info.get("busy"):
         building_dict = add_busy_info(building_dict, building_info["busy"])
+        building_dict["status"] = "busy"
     return BuildingInfo(**building_dict)
 
 
