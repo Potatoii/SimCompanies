@@ -25,7 +25,7 @@ async def building_status_monitor():
                 if building_info.status == "idle":
                     if not is_idle:
                         logger.info(f"{company_name}-{building_name}已空闲")
-                        await notifier.notify(f"{building_name}已空闲")
+                        await notifier.notify(f"{company_name}-{building_name}已空闲")
                         idle_building_set.add(building_id)
                 elif is_idle:
                     logger.info(f"{building_name}已恢复工作")
