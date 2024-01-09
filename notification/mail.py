@@ -22,10 +22,10 @@ class MailServerSchema(BaseModel):
     邮件服务器
     """
 
-    host: str = settings.mail_config["host"]
-    port: int = settings.mail_config["port"]
-    username: str = settings.mail_config["username"]
-    password: str = settings.mail_config["password"]
+    host: str = settings.notice_config.mail.host
+    port: int = settings.notice_config.mail.port
+    username: str = settings.notice_config.mail.username
+    password: str = settings.notice_config.mail.password
 
 
 class MailSchema(BaseModel):
@@ -110,8 +110,8 @@ if __name__ == "__main__":
     import asyncio
 
     test_params = MailSchema(
-        mail_from=settings.mail_config["username"],
-        mail_to=[settings.mail_config["username"]],
+        mail_from=settings.notice_config.mail.username,
+        mail_to=[settings.notice_config.mail.username],
         subject="test",
         content="test",
     )

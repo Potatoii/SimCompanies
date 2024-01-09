@@ -75,8 +75,8 @@ class SimClient:
         auth_response = await self.post(
             auth_api,
             {
-                "email": settings.user_config["email"],
-                "password": settings.user_config["password"],
+                "email": settings.user_config.email,
+                "password": settings.user_config.password,
                 "timezone_offset": -480,
             }
         )

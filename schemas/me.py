@@ -59,7 +59,7 @@ class AuthCompany(BaseModel):
     productionModifier: int
     salesModifier: int
     countryCodeIsoUserSet: str
-    rank: int
+    rank: Optional[int]
     extraExecutiveSlots: int
     extraBuildingSlots: int
     displayCaseSlots: int
@@ -83,7 +83,7 @@ class Preferences(BaseModel):
     theme: str
 
 
-class Company(BaseModel):
+class MyCompany(BaseModel):
     authCompany: AuthCompany
     authUser: AuthUser
     levelInfo: LevelInfo

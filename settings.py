@@ -1,28 +1,45 @@
-import json
 import os.path
+from typing import Optional
+
+from pydantic import Field
+
+from toml_settings import TomlSettings
 
 root_path = os.path.dirname(os.path.abspath(__file__))
-log_name = "simbot.log"
-stdout_level = "INFO"
-file_level = "INFO"
 
-if not os.path.exists("config.json"):
-    with open("config.json", "w") as file:
-        file.write(json.dumps({
-            "user_config": {
-                "email": "",
-                "password": ""},
-            "mail_config": {
-                "host": "",
-                "port": "",
-                "username": "",
-                "password": ""
-            },
-            "bark_key": ""
-        }, indent=2))
 
-json_config = json.loads(open("config.json", "r", encoding="utf-8").read())
+class LogSettings(TomlSettings):
+    __table_name__ = "log"
+    log_name: str = "simbot.log"
+    stdout_level: str = "INFO"
+    file_level: str = "INFO"
 
-user_config = json_config["user_config"]
-mail_config = json_config["mail_config"]
-bark_key = json_config["bark_key"]
+
+class UserSettings(TomlSettings):
+    __table_name__ = "user"
+    email: str
+    password: str
+
+
+class MailSettings(TomlSettings):
+    __table_name__ = "notice.mail"
+    host: Optional[str] = Field(required=False, default="smtp.qq.com")
+    port: Optional[int] = Field(required=False, default=465)
+    username: Optional[str] = Field(required=False, default="")
+    password: Optional[str] = Field(required=False, default="")
+
+
+class BarkSettings(TomlSettings):
+    __table_name__ = "notice.bark"
+    bark_key: Optional[str] = Field(required=False, default="")
+
+
+class NoticeSettings(TomlSettings):
+    __table_name__ = "notice"
+    mail: MailSettings = MailSettings()
+    bark: BarkSettings = BarkSettings()
+
+
+log_config = LogSettings()
+user_config = UserSettings()
+notice_config = NoticeSettings()

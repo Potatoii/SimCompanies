@@ -6,6 +6,6 @@ services:
     working_dir: /simbot
     restart: always
     volumes:
-      - ./config.json:/simbot/config.json
+      - ./config.local.toml:/simbot/config.local.toml
       - ./logs:/simbot/logs
     command: "python main.py"

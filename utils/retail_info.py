@@ -21,8 +21,8 @@ class RetailInfo:
             item_id: int,
     ):
         """
-        :param realm_id: 领域(商业大亨|企业家)
-        :param economy_state: 经济状态(0:景气|1:平缓|2:萧条)
+        :param realm_id: 领域(0:商业大亨|1:企业家)
+        :param economy_state: 经济状态(0:萧条|1:平缓|2:景气)
         :param item_id: 物品id
         """
         self.realm_id = realm_id
