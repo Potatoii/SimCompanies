@@ -1,7 +1,7 @@
 import ast
 from datetime import datetime, timedelta
 import re
-from typing import List
+from typing import List, Optional
 
 import httpx
 from bs4 import BeautifulSoup
@@ -10,7 +10,7 @@ from decorators import sim_client, httpx_client
 from schemas import Executive
 from schemas.encyclopedia import EncyclopediaItem
 from schemas.market import MarketItem
-from schemas.me import Company
+from schemas.me import MyCompany
 from schemas.retail import RetailModel
 from schemas.user import User
 from sim_request import SimClient
@@ -91,7 +91,7 @@ def executive_filter(executives: List[Executive]) -> List[Executive]:
 
 
 @sim_client
-async def get_my_company(*, simclient: SimClient = None) -> Company:
+async def get_my_company(*, simclient: SimClient = None) -> MyCompany:
     """
     获取自己的公司信息
     :param simclient: SimClient
@@ -100,7 +100,7 @@ async def get_my_company(*, simclient: SimClient = None) -> Company:
     url = "https://www.simcompanies.com/api/v2/companies/me/"
     response = await simclient.get(url)
     company = response.json()
-    company = Company(**company)
+    company = MyCompany(**company)
     return company
 
 
@@ -127,7 +127,7 @@ async def get_item_info(
         item_id: int,
         *,
         simclient: SimClient = None
-) -> EncyclopediaItem:
+) -> Optional[EncyclopediaItem]:
     """
     获取物品信息
     :param realm_id: 领域(0:商业大亨|1:企业家)
@@ -138,7 +138,10 @@ async def get_item_info(
     """
     wiki_url = f"https://www.simcompanies.com/api/v4/zh/{realm_id}/encyclopedia/resources/{economy_state}/{item_id}/"
     response = await simclient.client.get(wiki_url)
+    if response.status_code == 404:
+        return None
     item_info = response.json()
+    item_info["soldAtRestaurant"] = True if item_info.get("soldAtRestaurant") else False
     item = EncyclopediaItem(**item_info)
     return item
 
@@ -179,5 +182,5 @@ async def get_market_price(realm_id: int, item_id: int, *, client: httpx.AsyncCl
 if __name__ == "__main__":
     import asyncio
 
-    print(asyncio.run(get_item_info(0, 0, 47)))
+    print(asyncio.run(get_item_info(0, 0, 91)))
     # print(asyncio.run(get_my_company()))
