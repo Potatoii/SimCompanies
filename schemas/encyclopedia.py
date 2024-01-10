@@ -63,7 +63,7 @@ class EncyclopediaItem(BaseModel):
     realmAvailable: bool
     producedFrom: List[ProducedFrom]
     soldAt: Optional[str]
-    soldAtRestaurant: Optional[str]
+    soldAtRestaurant: bool
     producedAt: str
     neededFor: List[NeededFor]
     transportNeeded: float
