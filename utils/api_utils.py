@@ -223,4 +223,4 @@ if __name__ == "__main__":
 
     # print(asyncio.run(get_item_info(0, 0, 56)))
     # print(asyncio.run(get_retail_model(0, 0, 56)))
-    print(asyncio.run(get_resources()))
+    print(asyncio.run(get_resource("豪华燃油车", 2)))
