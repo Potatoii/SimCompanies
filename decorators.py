@@ -29,6 +29,7 @@ def sim_client(func: Callable):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         from sim_request import SimClient
+        await asyncio.sleep(0.1)
         if "simclient" not in kwargs or not isinstance(kwargs["simclient"], SimClient):
             async with SimClient() as simclient:
                 kwargs["simclient"] = simclient

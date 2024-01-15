@@ -7,10 +7,11 @@ import httpx
 from bs4 import BeautifulSoup
 
 from decorators import sim_client, httpx_client
-from schemas import Executive
 from schemas.encyclopedia import EncyclopediaItem
+from schemas.executive import Executive
 from schemas.market import MarketItem
 from schemas.me import MyCompany
+from schemas.resouces import Resource
 from schemas.retail import RetailModel
 from schemas.user import User
 from sim_request import SimClient
@@ -33,13 +34,13 @@ async def get_retail_model(
     :return: 零售模型
     """
     resource_url = f"https://www.simcompanies.com/zh/encyclopedia/{realm_id}/resource/{item_id}/"
-    response = await simclient.client.get(resource_url)
+    response = await simclient.raw_get(resource_url)
     html_content = response.text
     soup = BeautifulSoup(html_content, "html.parser")
     # 获取js
     script_tags = soup.find_all("script", {"type": "module"})
     js_url = script_tags[0].attrs.get("src")
-    js = await simclient.client.get(js_url)
+    js = await simclient.raw_get(js_url)
     # 正则匹配取出retail_model
     pattern = re.compile(r"\{(\d+):{(\d+):(.*?)}}}}")
     match = pattern.search(js.text)
@@ -74,19 +75,24 @@ def executive_filter(executives: List[Executive]) -> List[Executive]:
     now_timestamp = datetime.now().timestamp() * 1000
     filtered_executives = []
     for executive in executives:
-        if (
-                executive.position[0] != "c"
-                or now_timestamp - datetime.timestamp(datetime.fromisoformat(executive.start)) * 1000 >= 10800000
-                or executive.positionAccelerated
-                or executive.isCandidate
-                or not executive.currentTraining
-                or executive.currentTraining.accelerated
-                or datetime.timestamp(
-            datetime.fromisoformat(executive.currentTraining.datetime)) <= now_timestamp - 97200000
-                or not executive.strikeUntil
-                or datetime.timestamp(datetime.fromisoformat(executive.strikeUntil)) <= now_timestamp
-        ):
-            filtered_executives.append(executive)
+        if executive.position[0] != "c":
+            continue
+        if now_timestamp - int(datetime.timestamp(datetime.fromisoformat(executive.start)) * 1000) < 10800000:
+            continue
+        if executive.positionAccelerated:
+            continue
+        if executive.isCandidate:
+            continue
+        if executive.currentTraining:
+            if not executive.currentTraining.accelerated:
+                continue
+            if int(datetime.timestamp(
+                    datetime.fromisoformat(executive.currentTraining.datetime))) > now_timestamp - 97200000:
+                continue
+        if executive.strikeUntil:
+            if int(datetime.timestamp(datetime.fromisoformat(executive.strikeUntil))) > now_timestamp:
+                continue
+        filtered_executives.append(executive)
     return filtered_executives
 
 
@@ -105,7 +111,7 @@ async def get_my_company(*, simclient: SimClient = None) -> MyCompany:
 
 
 @sim_client
-async def get_user_company(user_name: str, realm_id: int = 1, *, simclient: SimClient = None) -> User:
+async def get_user_company(user_name: str, realm_id: int = 0, *, simclient: SimClient = None) -> User:
     """
     获取指定公司信息
     :param user_name: 公司名
@@ -137,7 +143,7 @@ async def get_item_info(
     :return: 物品信息
     """
     wiki_url = f"https://www.simcompanies.com/api/v4/zh/{realm_id}/encyclopedia/resources/{economy_state}/{item_id}/"
-    response = await simclient.client.get(wiki_url)
+    response = await simclient.raw_get(wiki_url)
     if response.status_code == 404:
         return None
     item_info = response.json()
