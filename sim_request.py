@@ -23,7 +23,7 @@ class SimClient:
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.76",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
             "X-Tz-Offset": "-480"
         }
         self.cookies: Cookies = Cookies()
@@ -61,6 +61,10 @@ class SimClient:
         self.headers["X-Csrftoken"] = self.cookies.get("csrftoken")
         response = await self.client.request(method, url, json=body, headers=self.headers, cookies=self.cookies)
         return response
+
+    @retry(notice=False)
+    async def raw_get(self, url: str):
+        return await self.client.get(url)
 
     @retry(notice=True)
     async def get(self, url: str):
