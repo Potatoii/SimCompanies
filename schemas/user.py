@@ -1,5 +1,5 @@
 from typing import Optional, List, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Building(BaseModel):
@@ -32,7 +32,7 @@ class Company(BaseModel):
     rank: int
     rating: str
     dateJoined: str
-    dateReset: str
+    dateReset: Optional[str] = Field(None, description="上次重置时间(字段已废弃)")
     lastSeen: str
     previousNames: List[str]
     workers: int

@@ -185,8 +185,42 @@ async def get_market_price(realm_id: int, item_id: int, *, client: httpx.AsyncCl
     return item_list
 
 
+@sim_client
+async def get_resources(*, simclient: SimClient = None) -> List[Resource]:
+    """
+    获取全部库存
+    :param simclient: SimClient
+    :return: 全部库存
+    """
+    resources_url = "https://www.simcompanies.com/api/v2/resources/"
+    response = await simclient.get(resources_url)
+    resources = response.json()
+    resources = [Resource(**resource) for resource in resources]
+    return resources
+
+
+@sim_client
+async def get_resource(resource_name: str, quality: int, *, simclient: SimClient = None) -> Resource:
+    """
+    获取库存
+    :param resource_name: 名称
+    :param quality: 品质
+    :param simclient: SimClient
+    :return: 库存
+    """
+    resources = await get_resources(simclient=simclient)
+    resource: Resource = next(
+        filter(lambda x: x.kind.name == resource_name and x.quality == quality, resources),
+        None
+    )
+    if not resource:
+        raise Exception(f"找不到{resource_name}的信息")
+    return resource
+
+
 if __name__ == "__main__":
     import asyncio
 
-    print(asyncio.run(get_item_info(0, 0, 91)))
-    # print(asyncio.run(get_my_company()))
+    # print(asyncio.run(get_item_info(0, 0, 56)))
+    # print(asyncio.run(get_retail_model(0, 0, 56)))
+    print(asyncio.run(get_resources()))

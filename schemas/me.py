@@ -12,7 +12,7 @@ class Capabilities(BaseModel):
 
 
 class Acceleration(BaseModel):
-    multiplier: int
+    multiplier: int = Field(description="加速倍数")
     until: Optional[Any]
 
 
