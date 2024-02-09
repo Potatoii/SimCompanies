@@ -66,6 +66,6 @@ SimBot是一个Python的simcompanies建筑物监控, 每分钟检查一下你的
 
 Bark是一款开源的IOS自定义通知App, 链接[Finb/Bark](https://github.com/Finb/Bark)
 
-<img src="https://camo.githubusercontent.com/6bb51b279859e4428bf3cd507d6227f86c2a545ce4c4e067d41327d6e8beebcd/68747470733a2f2f7778342e73696e61696d672e636e2f6d77323030302f30303372596671706c7931677264316d65717276636a3630626930387a74396930322e6a7067"  width="320" height="260" alt="bark"/>
+<img src="https://camo.githubusercontent.com/0e5564bc970291ae1ddbc1cee4bdc1e5374d027a7001fe79fc1b862401f1bfe6/68747470733a2f2f7778342e73696e61696d672e636e2f6d77323030302f30303372596671706c7931677264316d65717276636a3630626930387a74396930322e6a7067"  width="320" height="260" alt="bark"/>
 
 复制这里的链接, 截取图中"Your Key"的内容填在SimBot的**config.local.toml**的**bark_key**中, 即可开始使用Bark通知
