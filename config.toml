@@ -17,3 +17,8 @@ password = ""
 [notice.bark]
 # bark通知
 bark_key = ""
+
+[market]
+# 交易行监控id列表
+# e.g: item_list = [{ id = 32, quality = 0, price = 360 }, { id = 100, quality = 0, price = 300 }]
+item_list = []

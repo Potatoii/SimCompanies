@@ -1,5 +1,5 @@
 import os.path
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import Field
 
@@ -40,6 +40,12 @@ class NoticeSettings(TomlSettings):
     bark: BarkSettings = BarkSettings()
 
 
+class MarketSettings(TomlSettings):
+    __table_name__ = "market"
+    item_list: Optional[List] = Field(required=False, default=[])
+
+
 log_config = LogSettings()
 user_config = UserSettings()
 notice_config = NoticeSettings()
+market_config = MarketSettings()
