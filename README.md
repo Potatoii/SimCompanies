@@ -16,19 +16,23 @@
 
 ## 简介
 
-SimBot是一个Python的simcompanies建筑物监控, 每分钟检查一下你的建筑物有没有在摸鱼
+SimBot是一个Python的simcompanies建筑物监控, 每5-6分钟检查一下你的建筑物有没有在摸鱼
 
 ## 开始
 
+### 配置
+
+在项目目录中有一个`config.toml`文件, 拷贝一个并命名为`config.local.toml`, 填写内容(邮件通知和Bark通知至少填一个)
+
 ### 运行
 
-1. 安装并切换到python虚拟环境(virtualenv | conda | etc.)
+1. 安装并切换到python3.11环境(virtualenv | conda | etc.)
 2. 安装项目依赖
 
    ```bash
    pip install -r requirements.txt
    ```
-3. 运行项目并根据提示初始化配置
+3. 运行项目
 
    ```bash
    python main.py
@@ -36,7 +40,7 @@ SimBot是一个Python的simcompanies建筑物监控, 每分钟检查一下你的
 
 ### Docker
 
-1. 在项目目录中创建一个`config.local.toml`文件, 填写内容(邮件通知和Bark通知至少填一个)
+1. 在本地创建配置文件`config.local.toml`
 
 2. ```bash
    docker-compose up -d
@@ -60,7 +64,7 @@ SimBot是一个Python的simcompanies建筑物监控, 每分钟检查一下你的
 ```
 
 - 163邮箱host改成smtp.163.com相同
-- gmail直接使用邮箱和密码即可(需要海外环境, 未测试)
+- gmail直接使用邮箱和密码即可
 
 ### Bark
 

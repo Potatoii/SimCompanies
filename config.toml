@@ -4,13 +4,16 @@ stdout_level = "INFO"
 file_level = "INFO"
 
 [user]
+# 登录的用户名密码
 email = ""
 password = ""
 
 [notice.mail]
+# 邮箱通知
 host = "smtp.qq.com"
 port = 465
 username = ""
 password = ""
 [notice.bark]
+# bark通知
 bark_key = ""
