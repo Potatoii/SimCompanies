@@ -2,6 +2,8 @@ import asyncio
 import functools
 from typing import Callable
 
+from settings import user_config
+
 
 def httpx_client(func: Callable):
     """
@@ -55,7 +57,7 @@ def retry(max_retries=3, delay=1, notice=False):
                     if i == max_retries - 1:
                         if notice:
                             from notification import notifier
-                            await notifier.notify(f"{func.__name__}执行失败, 请检查服务器或账号情况并重启程序: {e}")
+                            await notifier.notify(f"{func.__name__}执行失败, 请检查服务器或{user_config.email}账号情况并重启程序: {e}")
                         raise e
                     else:
                         await asyncio.sleep(delay)
