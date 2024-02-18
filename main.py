@@ -1,10 +1,14 @@
-from bot import building_status_monitor
+from decorators import sim_client
 from log_utils import logger
+from monitor import building_status_monitor
+from sim_request import SimClient
+from utils.api_utils import get_my_company
 
 
-async def main():
-    logger.info("开始监控建筑状态")
-    await building_status_monitor()
+@sim_client
+async def main(simclient: SimClient = None):
+    my_company = await get_my_company(simclient=simclient)
+    await building_status_monitor(my_company, simclient=simclient)
 
 
 if __name__ == "__main__":
