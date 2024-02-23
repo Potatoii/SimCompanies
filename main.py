@@ -40,22 +40,23 @@ async def price_monitor(my_company, simclient: SimClient = None):
     """
     交易所价格监控
     """
-    logger.info("开始监控交易行")
-    while True:
-        for item in market_config.item_list:
-            market_item_list = await get_market_price(
-                realm_id=my_company.authCompany.realmId,
-                item_id=item["id"],
-                client=simclient.client
-            )
-            min_price = -1
-            for market_item in market_item_list:
-                if market_item.quality >= item["quality"]:
-                    min_price = market_item.price
-            if 0 < min_price <= item["price"]:
-                logger.info(f"{item['name']}价格小于等于{item['price']}")
-                await notifier.notify(f"{item['name']}价格小于等于{item['price']}")
-        await asyncio.sleep(3600)
+    if market_config.item_list:
+        logger.info("开始监控交易行")
+        while True:
+            for item in market_config.item_list:
+                market_item_list = await get_market_price(
+                    realm_id=my_company.authCompany.realmId,
+                    item_id=item["id"],
+                    client=simclient.client
+                )
+                min_price = -1
+                for market_item in market_item_list:
+                    if market_item.quality >= item["quality"]:
+                        min_price = market_item.price
+                if 0 < min_price <= item["price"]:
+                    logger.info(f"{item['name']}价格小于等于{item['price']}")
+                    await notifier.notify(f"{item['name']}价格小于等于{item['price']}")
+            await asyncio.sleep(3600)
 
 
 @sim_client
