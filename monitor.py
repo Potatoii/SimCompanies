@@ -5,12 +5,13 @@ from typing import Dict
 from decorators import sim_client
 from log_utils import logger
 from notification import notifier
+from schemas.me import MyCompany
 from sim_request import SimClient
 from utils import BuildingInfo, get_building_info
 
 
 @sim_client
-async def building_status_monitor(my_company, simclient: SimClient = None):
+async def building_status_monitor(my_company: MyCompany, simclient: SimClient = None):
     """
     建筑状态监控
     """
