@@ -68,7 +68,8 @@ class SimClient:
 
     @retry(notice=True)
     async def get(self, url: str):
-        return await self.request("GET", url)
+        # return await self.request("GET", url)
+        return await self.client.get(url)
 
     @retry(notice=True)
     async def post(self, url: str, body: dict):
@@ -89,3 +90,10 @@ class SimClient:
             raise Exception("login failed")
         logger.debug("登录成功")
         self.client.cookies = auth_response.cookies
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    simclient = SimClient()
+    asyncio.run(simclient.login())
